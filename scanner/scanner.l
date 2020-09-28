@@ -1,56 +1,71 @@
+%option noyywrap nounput
+%option caseless
+
 %{
 #include "parser.h"
 #include <stdio.h>
+
+int yyerror(char *);
+int line_num = 1;
+int lexerror;
 %}
 
-%option caseless
+linefeed   \n
+comment    "//".*\n
 
 %%
 
-"("  { printf("%i\n", OPEN_PAREN);       }
-")"  { printf("%i\n", CLOSE_PAREN);      }
-"{"  { printf("%i\n", OPEN_BRACE);       }
-"}"  { printf("%i\n", CLOSE_BRACE);      }
-"["  { printf("%i\n", OPEN_BRACKET);     }
-"]"  { printf("%i\n", CLOSE_BRACKET);    }
-":"  { printf("%i\n", COLON);            }
-";"  { printf("%i\n", SEMI_COLON);       }
-"="  { printf("%i\n", ASSIGN);           }
-"!"  { printf("%i\n", NOT);              }
-"!=" { printf("%i\n", DIFFERENT);        }
-"+"  { printf("%i\n", PLUS);             }
-"-"  { printf("%i\n", MINUS);            }
-"*"  { printf("%i\n", MULTIPLY);         }
-"/"  { printf("%i\n", DIV);              }
-","  { printf("%i\n", COMMA);            }
-"&&" { printf("%i\n", AND);              }
-"||" { printf("%i\n", OR);               }
-"<=" { printf("%i\n", LESS_OR_EQUAL);    }
-"<"  { printf("%i\n", LESS);             }
-"==" { printf("%i\n", EQUAL);            }
-">=" { printf("%i\n", GREATER_OR_EQUAL); }
-">"  { printf("%i\n", GREATER);          }
+"("  { return OPEN_PAREN;       }
+")"  { return CLOSE_PAREN;      }
+"{"  { return OPEN_BRACE;       }
+"}"  { return CLOSE_BRACE;      }
+"["  { return OPEN_BRACKET;     }
+"]"  { return CLOSE_BRACKET;    }
+":"  { return COLON;            }
+";"  { return SEMI_COLON;       }
+"="  { return ASSIGN;           }
+"!"  { return NOT;              }
+"!=" { return DIFFERENT;        }
+"+"  { return PLUS;             }
+"-"  { return MINUS;            }
+"*"  { return MULTIPLY;         }
+"/"  { return DIV;              }
+","  { return COMMA;            }
+"&&" { return AND;              }
+"||" { return OR;               }
+"<=" { return LESS_OR_EQUAL;    }
+"<"  { return LESS;             }
+"==" { return EQUAL;            }
+">=" { return GREATER_OR_EQUAL; }
+">"  { return GREATER;          }
 
-"else" { printf("%i\n", ELSE);           }
-"functions" { printf("%i\n", FUNCTIONS); }
+"else"      { return ELSE;      }
+"functions" { return FUNCTIONS; }
+"goto"      { return GOTO;      }
+"if"        { return IF;        }
+"labels"    { return LABELS;    }
+"return"    { return RETURN;    }
+"types"     { return TYPES;     }
+"var"       { return VAR;       }
+"vars"      { return VARS;      }
+"void"      { return VOID;      }
+"while"     { return WHILE;     }
 
-"integer" { printf("%i\n", IDENTIFIER); }
-"boolean" { printf("%i\n", IDENTIFIER); }
-"true"    { printf("%i\n", IDENTIFIER); }
-"false"   { printf("%i\n", IDENTIFIER); }
-"read"    { printf("%i\n", IDENTIFIER); }
-"write"   { printf("%i\n", IDENTIFIER); }
+"integer" { return IDENTIFIER; }
+"boolean" { return IDENTIFIER; }
+"true"    { return IDENTIFIER; }
+"false"   { return IDENTIFIER; }
+"read"    { return IDENTIFIER; }
+"write"   { return IDENTIFIER; }
 
+<<EOF>> { return END_OF_FILE; }
 
-[0-9]+               { printf("%i\n", INTEGER);    }
-[a-z]+([0-9]|[a-z])* { printf("%i\n", IDENTIFIER); }
+[0-9]+               { return INTEGER;    }
+[a-z]+([0-9]|[a-z])* { return IDENTIFIER; }
 
-[[:space:]]
-[[:^space:]]
+{linefeed}   { line_num++;           }
+{comment}    { line_num++;           }
+[[:space:]]  {                       }
+[[:^space:]] { yyerror(yytext); return LEXICAL_ERROR; }
 
 %%
-
-int main() {
-  yylex();
-  return 0;
-}
