@@ -66,7 +66,7 @@ comment    "//".*\n
 {linefeed}   { line_num++; }
 {comment}    { line_num++; }
 
-[[:space:]]  {                                        }
+[[:space:]]  {                                   }
 [[:^space:]] { lexerror=1; return LEXICAL_ERROR; }
 
 %%
