@@ -49,7 +49,7 @@ int yyerror();
 program: function END_OF_FILE { return 0; }
        ;
 
-function: function_header  block
+function: function_header block
         ;
 
 function_header: VOID identifier formal_parameters
@@ -67,11 +67,11 @@ labels:
       ;
 
 types:
-     | types types_definition
+     | TYPES types_definition
      ;
 
 types_definition: identifier ASSIGN type SEMI_COLON
-/*                | types_definition identifier ASSIGN type SEMI_COLON*/
+                | types_definition identifier ASSIGN type SEMI_COLON
                 ;
 
 variables:
@@ -112,7 +112,11 @@ formal_parameter_list: formal_parameter_opt COMMA formal_parameter
                      ;
 
 formal_parameter: expression_parameter
+                | function_parameter
                 ;
+
+function_parameter: function_header
+                  ;
 
 expression_parameter: VAR identifier_list COLON identifier
                     | identifier_list COLON identifier
@@ -142,8 +146,11 @@ assignment: variable ASSIGN expression SEMI_COLON
 empty_statement: SEMI_COLON
                ;
 
-variable: identifier
+variable: identifier variable_expression
         ;
+
+variable_expression:
+                   | variable_expression OPEN_BRACKET expression CLOSE_BRACKET
 
 expression_opt:
               | expression_list
