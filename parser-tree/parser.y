@@ -121,7 +121,7 @@ expression_parameter: VAR identifier_list COLON identifier
                     | identifier_list COLON identifier
                     ;
 
-statement_list: statement_list statement
+statement_list: statement_list statement { insertTopList(); }
               | empty
               ;
 
@@ -139,7 +139,7 @@ unlabeled_statement: assignment
                    | conditional
                    ;
 
-assignment: variable ASSIGN expression SEMI_COLON
+assignment: variable ASSIGN expression SEMI_COLON { genNode(C_ASSIGN, 2); }
           ;
 
 empty_statement: SEMI_COLON
@@ -243,7 +243,7 @@ function_call_statement: function_call SEMI_COLON
 function_call: identifier OPEN_PAREN expression_opt CLOSE_PAREN
              ;
 
-integer: INTEGER
+integer: INTEGER { genInt(copy_str(yytext)); }
        ;
 
 empty: { genEmpty(); }

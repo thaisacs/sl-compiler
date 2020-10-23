@@ -2,9 +2,9 @@ bison -d -o parser.c parser.y
 flex -i -o scanner.c scanner.l
 gcc -std=c99 -pedantic -o test_tree *.c
 
-for n in `seq 1 1 2`
+for n in `seq 1 1 1`
 do
-  ./test_tree < all/pr0$n.sl > teste
+  ./test_tree < all/pr06.sl > teste
   #diff all/result0$n teste
   cat teste
   echo $n'------------------------------------'

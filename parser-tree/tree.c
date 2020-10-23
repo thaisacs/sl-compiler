@@ -11,6 +11,11 @@ char* copy_str(char *s) {
   return s_cpy;
 }
 
+int copy_int(char *s) {
+  int i_cpy = atoi(s);
+  return i_cpy;
+}
+
 void *getTree() {
   return stack[top-1];
 }
@@ -60,6 +65,10 @@ void genIdent(char *tok_val) {
   genNode3(C_IDENT, 0, tok_val);
 }
 
+void genInt(char *tok_val) {
+  genNode3(C_INT, 0, tok_val);
+}
+
 void insertTopList() {
   TreeNodePtr t = stack[--top];
   TreeNodePtr s = stack[top-1];
@@ -68,21 +77,29 @@ void insertTopList() {
 }
 
 void dumpNode(TreeNodePtr p) {
-  printf("categ: %i\n", p->categ);
+  printf("\ncateg: %i\n", p->categ);
   printf("n: %i\n", p->n);
   if(p->str)
     printf("str: %s\n", p->str);
 }
 
 void dumpTree(TreeNodePtr p) {
-  //dumpNode(p);
+  if(p) {
+    dumpNode(p);
 
-  dumpNode(p->comps[0]);
+    for(int i = 0; i < p->n; i++) {
+      printf("\n%i -> ", i);
+      dumpTree(p->comps[i]);
+    }
 
-  //TreeNodePtr k = p->next;
-  //while(k) {
-  //  dumpNode(k);
-  //  k = k->next;
-  //}
-
+    TreeNodePtr k = p->next;
+    while(k) {
+      printf("tem\n");
+      break;
+      //dumpTree(k);
+      //k = k->next;
+    }
+  }else{
+    printf("\nvazio\n");
+  }
 }

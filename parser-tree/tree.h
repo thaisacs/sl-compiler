@@ -11,7 +11,9 @@ typedef enum {
   C_BLOCK,
   C_IDENT,
   C_BODY,
-  C_VARS
+  C_VARS,
+  C_ASSIGN,
+  C_INT
 } Categ;
 
 typedef struct _treeNode {
@@ -31,6 +33,8 @@ void genNode3(Categ, int, char*);
 void genEmpty();
 void genIdent(char*);
 void genNode(Categ, int);
+void genInt(char*);
+int copy_int(char*);
 
 void insertTopList();
 
