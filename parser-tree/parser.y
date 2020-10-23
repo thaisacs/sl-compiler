@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
+#include "tree.h"
 
+char *yytext;
 int yylex();
 int yyerror();
 %}
@@ -49,33 +51,33 @@ int yyerror();
 program: function END_OF_FILE { return 0; }
        ;
 
-function: function_header block
+function: function_header block { genNode(C_FUNCTION, 4); }
         ;
 
-function_header: VOID identifier formal_parameters
+function_header: VOID { genEmpty(); } identifier formal_parameters
                | identifier identifier formal_parameters
                ;
 
-block: labels types variables functions body
+block: labels types variables functions body { genNode(C_BLOCK, 5); }
      ;
 
-body: OPEN_BRACE statement_list CLOSE_BRACE
+body: OPEN_BRACE statement_list CLOSE_BRACE { }
     ;
 
-labels:
-      | LABELS identifier_list SEMI_COLON
+labels: LABELS identifier_list SEMI_COLON
+      | empty
       ;
 
-types:
-     | TYPES types_definition
+types: TYPES types_definition
+     | empty
      ;
 
 types_definition: identifier ASSIGN type SEMI_COLON
                 | types_definition identifier ASSIGN type SEMI_COLON
                 ;
 
-variables:
-         | VARS variable_definition variables_definition
+variables: VARS variable_definition variables_definition
+         | empty
          ;
 
 variables_definition:
@@ -85,8 +87,8 @@ variables_definition:
 variable_definition: identifier_list COLON type SEMI_COLON
                    ;
 
-functions:
-         | FUNCTIONS function_list
+functions: FUNCTIONS function_list
+         | empty
          ;
 
 function_list: function_list function
@@ -100,7 +102,7 @@ type_array:
           | type_array OPEN_BRACKET integer CLOSE_BRACKET
           ;
 
-formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN
+formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN { genEmpty(); }
                  ;
 
 formal_parameter_opt:
@@ -122,8 +124,8 @@ expression_parameter: VAR identifier_list COLON identifier
                     | identifier_list COLON identifier
                     ;
 
-statement_list:
-              | statement_list statement
+statement_list: statement_list statement
+              | empty
               ;
 
 statement: unlabeled_statement
@@ -180,7 +182,7 @@ identifier_list: identifier_list COMMA identifier
                | identifier
                ;
 
-identifier: IDENTIFIER
+identifier: IDENTIFIER { genIdent(copy_str(yytext)); }
           ;
 
 goto: GOTO identifier SEMI_COLON
@@ -246,4 +248,6 @@ function_call: identifier OPEN_PAREN expression_opt CLOSE_PAREN
 
 integer: INTEGER
        ;
+
+empty: { genEmpty(); }
 %%
