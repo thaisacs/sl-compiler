@@ -60,22 +60,29 @@ void genIdent(char *tok_val) {
   genNode3(C_IDENT, 0, tok_val);
 }
 
+void insertTopList() {
+  TreeNodePtr t = stack[--top];
+  TreeNodePtr s = stack[top-1];
+  t->next = s;
+  stack[top-1] = t;
+}
+
 void dumpNode(TreeNodePtr p) {
-  if(p) {
-    printf("%i ", p->categ);
-    if(p->str)
-      printf("%s\n", p->str);
-    else
-      printf("\n");
-  }else {
-    printf("vazio\n");
-  }
+  printf("categ: %i\n", p->categ);
+  printf("n: %i\n", p->n);
+  if(p->str)
+    printf("str: %s\n", p->str);
 }
 
 void dumpTree(TreeNodePtr p) {
-  dumpNode(p);
-  for(int i = 0; i < p->n; i++) {
-    printf("%i -> ", i);
-    dumpNode(p->comps[i]);
-  }
+  //dumpNode(p);
+
+  dumpNode(p->comps[0]);
+
+  //TreeNodePtr k = p->next;
+  //while(k) {
+  //  dumpNode(k);
+  //  k = k->next;
+  //}
+
 }

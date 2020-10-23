@@ -76,16 +76,13 @@ types_definition: identifier ASSIGN type SEMI_COLON
                 | types_definition identifier ASSIGN type SEMI_COLON
                 ;
 
-variables: VARS variable_definition variables_definition
+variable_declarations: identifier_list COLON type SEMI_COLON { genNode(C_VARS, 2); }
+                     | variable_declarations identifier_list COLON type SEMI_COLON { genNode(C_VARS, 2); insertTopList(); }
+                     ;
+
+variables: VARS variable_declarations
          | empty
          ;
-
-variables_definition:
-                    | variable_definition variables_definition
-                    ;
-
-variable_definition: identifier_list COLON type SEMI_COLON
-                   ;
 
 functions: FUNCTIONS function_list
          | empty
@@ -95,7 +92,7 @@ function_list: function_list function
              | function
              ;
 
-type: IDENTIFIER type_array
+type: identifier type_array
     ;
 
 type_array:
@@ -178,7 +175,7 @@ relational_operator: LESS_OR_EQUAL
                    | GREATER
                    ;
 
-identifier_list: identifier_list COMMA identifier
+identifier_list: identifier_list COMMA identifier { insertTopList(); }
                | identifier
                ;
 
