@@ -7,7 +7,13 @@ char *C_OPT_SYMBOL[] = {
   [C_DIV]="/",
   [C_AND]="&&",
   [C_OR]="||",
-  [C_NOT]="!"
+  [C_NOT]="!",
+  [C_LESS_EQUAL]="<=",
+  [C_LESS]="<",
+  [C_EQUAL]="=",
+  [C_DIFFERENT]="!=",
+  [C_GREATER_EQUAL]=">+",
+  [C_GREATER]=">"
 };
 
 int top = 0;
@@ -34,6 +40,8 @@ void test(TreeNodePtr p, int *functions, int *funcalls,
       (*whiles)++;
     else if(p->categ == C_IF)
       (*ifs)++;
+    else if(p->categ == C_BIN_EXPR)
+      (*bin)++;
 
     for(int i = 0; i < p->n; i++) {
       test(p->comps[i], functions, funcalls, whiles, ifs, bin);

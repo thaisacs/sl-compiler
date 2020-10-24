@@ -166,15 +166,15 @@ expression: simple_expression expression_end
           ;
 
 expression_end:
-              | relational_operator simple_expression
+              | relational_operator simple_expression { genNode(C_BIN_EXPR, 2); }
               ;
 
-relational_operator: LESS_OR_EQUAL
-                   | LESS
-                   | EQUAL
-                   | DIFFERENT
-                   | GREATER_OR_EQUAL
-                   | GREATER
+relational_operator: LESS_OR_EQUAL     { genOpSymbol(C_LESS_EQUAL);    }
+                   | LESS              { genOpSymbol(C_LESS);          }
+                   | EQUAL             { genOpSymbol(C_EQUAL);         }
+                   | DIFFERENT         { genOpSymbol(C_DIFFERENT);     }
+                   | GREATER_OR_EQUAL  { genOpSymbol(C_GREATER_EQUAL); }
+                   | GREATER           { genOpSymbol(C_GREATER);       }
                    ;
 
 identifier_list: identifier_list COMMA identifier { insertTopList(); }
@@ -231,7 +231,7 @@ factor: variable
       ;
 
 term: factor
-    | term multiplicative_operator factor { genNode(C_TERM, 2); insertTopList(); }
+    | term multiplicative_operator factor { genNode(C_BIN_EXPR, 2); insertTopList(); }
     ;
 
 multiplicative_operator: MULTIPLY { genOpSymbol(C_MUL); }

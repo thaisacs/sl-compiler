@@ -14,8 +14,7 @@ done
 for n in `seq 10 1 27`
 do
   ./test_tree < all/pr$n.sl > teste
-  #diff all/result$n teste
-  cat teste
+  diff all/result$n teste
   echo $n'------------------------------------'
   rm teste
 done

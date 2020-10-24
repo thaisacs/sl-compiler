@@ -22,7 +22,6 @@ typedef enum {
   C_WHILE,
   C_IF,
   C_OPERATOR,
-  C_TERM,
   C_BIN_EXPR,
   C_UN_EXPR,
   C_RETURN,
@@ -36,7 +35,13 @@ typedef enum {
   C_AND,
   C_MINUS,
   C_OR,
-  C_NOT
+  C_NOT,
+  C_LESS_EQUAL,
+  C_LESS,
+  C_EQUAL,
+  C_DIFFERENT,
+  C_GREATER_EQUAL,
+  C_GREATER
 } Operator;
 
 typedef struct _treeNode {
