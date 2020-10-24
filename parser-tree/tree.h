@@ -5,6 +5,8 @@
 #define MAX_STACK_SIZE 10
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 typedef enum {
   C_FUNCTION = 1,
@@ -13,8 +15,29 @@ typedef enum {
   C_BODY,
   C_VARS,
   C_ASSIGN,
-  C_INT
+  C_INT,
+  C_FUNCTION_CALL,
+  C_GOTO,
+  C_VAR,
+  C_WHILE,
+  C_IF,
+  C_OPERATOR,
+  C_TERM,
+  C_BIN_EXPR,
+  C_UN_EXPR,
+  C_RETURN,
+  C_EMPTY
 } Categ;
+
+typedef enum {
+  C_SUM,
+  C_MUL,
+  C_DIV,
+  C_AND,
+  C_MINUS,
+  C_OR,
+  C_NOT
+} Operator;
 
 typedef struct _treeNode {
   Categ categ;
@@ -33,14 +56,14 @@ void genNode3(Categ, int, char*);
 void genEmpty();
 void genIdent(char*);
 void genNode(Categ, int);
+void genOpSymbol(Operator);
 void genInt(char*);
-int copy_int(char*);
 
 void insertTopList();
 
+char* copy_str(char*);
+
 void dumpNode(TreeNodePtr);
 void dumpTree(TreeNodePtr);
-
-char* copy_str(char*);
 
 #endif

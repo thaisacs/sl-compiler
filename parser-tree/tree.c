@@ -1,6 +1,14 @@
 #include "tree.h"
-#include <stdio.h>
-#include <string.h>
+
+char *C_OPT_SYMBOL[] = {
+  [C_SUM]="+",
+  [C_MINUS]="-",
+  [C_MUL]="*",
+  [C_DIV]="/",
+  [C_AND]="&&",
+  [C_OR]="||",
+  [C_NOT]="!"
+};
 
 int top = 0;
 TreeNodePtr stack[MAX_STACK_SIZE];
@@ -11,19 +19,30 @@ char* copy_str(char *s) {
   return s_cpy;
 }
 
-int copy_int(char *s) {
-  int i_cpy = atoi(s);
-  return i_cpy;
-}
-
 void *getTree() {
   return stack[top-1];
 }
 
 void test(TreeNodePtr p, int *functions, int *funcalls,
     int *whiles, int *ifs, int *bin) {
-  if(p->categ == C_FUNCTION)
-    (*functions)++;
+  if(p) {
+    if(p->categ == C_FUNCTION)
+      (*functions)++;
+    else if(p->categ == C_FUNCTION_CALL)
+      (*funcalls)++;
+    else if(p->categ == C_WHILE)
+      (*whiles)++;
+    else if(p->categ == C_IF)
+      (*ifs)++;
+
+    for(int i = 0; i < p->n; i++) {
+      test(p->comps[i], functions, funcalls, whiles, ifs, bin);
+    }
+
+    if(p->next) {
+      test(p->next, functions, funcalls, whiles, ifs, bin);
+    }
+  }
 }
 
 void counts(void *p, int *functions, int *funcalls,
@@ -35,8 +54,8 @@ void counts(void *p, int *functions, int *funcalls,
   *ifs = 0;
   *bin = 0;
 
-  //test(p, functions, funcalls, whiles, ifs, bin);
-  dumpTree(p);
+  test(p, functions, funcalls, whiles, ifs, bin);
+  //dumpTree(p);
 }
 
 void genNode3(Categ cat, int n, char *s) {
@@ -69,6 +88,10 @@ void genInt(char *tok_val) {
   genNode3(C_INT, 0, tok_val);
 }
 
+void genOpSymbol(Operator op) {
+  genNode3(C_OPERATOR, 0, C_OPT_SYMBOL[op]);
+}
+
 void insertTopList() {
   TreeNodePtr t = stack[--top];
   TreeNodePtr s = stack[top-1];
@@ -93,12 +116,12 @@ void dumpTree(TreeNodePtr p) {
     }
 
     TreeNodePtr k = p->next;
+    printf("init\n");
     while(k) {
-      printf("tem\n");
-      break;
-      //dumpTree(k);
-      //k = k->next;
+      dumpTree(k);
+      k = k->next;
     }
+    printf("end\n");
   }else{
     printf("\nvazio\n");
   }

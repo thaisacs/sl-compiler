@@ -61,7 +61,8 @@ function_header: VOID { genEmpty(); } identifier formal_parameters
 block: labels types variables functions body { genNode(C_BLOCK, 5); }
      ;
 
-body: OPEN_BRACE statement_list CLOSE_BRACE { }
+body: OPEN_BRACE statement_list CLOSE_BRACE
+    | OPEN_BRACE CLOSE_BRACE { genEmpty(); }
     ;
 
 labels: LABELS identifier_list SEMI_COLON
@@ -88,7 +89,7 @@ functions: FUNCTIONS function_list
          | empty
          ;
 
-function_list: function_list function
+function_list: function_list function { insertTopList(); }
              | function
              ;
 
@@ -122,7 +123,7 @@ expression_parameter: VAR identifier_list COLON identifier
                     ;
 
 statement_list: statement_list statement { insertTopList(); }
-              | empty
+              | statement
               ;
 
 statement: unlabeled_statement
@@ -142,20 +143,21 @@ unlabeled_statement: assignment
 assignment: variable ASSIGN expression SEMI_COLON { genNode(C_ASSIGN, 2); }
           ;
 
-empty_statement: SEMI_COLON
+empty_statement: SEMI_COLON { genNode(C_EMPTY, 0); }
                ;
 
-variable: identifier variable_expression
+variable: identifier variable_expression { genNode(C_VAR, 2); }
         ;
 
-variable_expression:
-                   | variable_expression OPEN_BRACKET expression CLOSE_BRACKET
+variable_expression: variable_expression OPEN_BRACKET expression CLOSE_BRACKET { insertTopList(); }
+                   | empty
+                   ;
 
-expression_opt:
-              | expression_list
+expression_opt: expression_list
+              | empty
               ;
 
-expression_list: expression_list COMMA expression
+expression_list: expression_list COMMA expression { insertTopList(); }
                | expression
                ;
 
@@ -182,44 +184,44 @@ identifier_list: identifier_list COMMA identifier { insertTopList(); }
 identifier: IDENTIFIER { genIdent(copy_str(yytext)); }
           ;
 
-goto: GOTO identifier SEMI_COLON
+goto: GOTO identifier SEMI_COLON { genNode(C_GOTO, 1); }
     ;
 
-return: RETURN SEMI_COLON
-      | RETURN expression SEMI_COLON
+return: RETURN SEMI_COLON { genEmpty(); genNode(C_RETURN, 2); }
+      | RETURN expression SEMI_COLON { genNode(C_RETURN, 2); }
       ;
 
-compound: OPEN_BRACE CLOSE_BRACE
+compound: OPEN_BRACE CLOSE_BRACE { genEmpty(); }
         | OPEN_BRACE compound_statement CLOSE_BRACE
         ;
 
-compound_statement: compound_statement unlabeled_statement
+compound_statement: compound_statement unlabeled_statement { insertTopList(); }
                   | unlabeled_statement
                   ;
 
-conditional: IF OPEN_PAREN expression CLOSE_PAREN compound
-           | IF OPEN_PAREN expression CLOSE_PAREN compound ELSE compound
+conditional: IF OPEN_PAREN expression CLOSE_PAREN compound { genEmpty(); genNode(C_IF, 3); }
+           | IF OPEN_PAREN expression CLOSE_PAREN compound ELSE compound { genNode(C_IF, 3); }
            ;
 
-repetitive: WHILE OPEN_PAREN expression CLOSE_PAREN compound
+repetitive: WHILE OPEN_PAREN expression CLOSE_PAREN compound { genNode(C_WHILE, 2); }
           ;
 
 simple_expression: term
-                 | simple_expression additive_operator term
+                 | simple_expression additive_operator term { genNode(C_BIN_EXPR, 2); insertTopList(); }
                  ;
 
-additive_operator: PLUS
-                 | MINUS
-                 | OR
-                 ;
-
-unop_expression: unary_operator term
-               | unop_expression additive_operator term
+unop_expression: unary_operator term { genNode(C_UN_EXPR, 2); }
+               | unop_expression additive_operator term { genNode(C_BIN_EXPR, 2); insertTopList(); }
                ;
 
-unary_operator: PLUS
-              | MINUS
-              | NOT
+additive_operator: PLUS  { genOpSymbol(C_SUM);  }
+                 | MINUS { genOpSymbol(C_MINUS); }
+                 | OR    { genOpSymbol(C_OR);   }
+                 ;
+
+unary_operator: PLUS  { genOpSymbol(C_SUM);  }
+              | MINUS { genOpSymbol(C_MINUS); }
+              | NOT   { genOpSymbol(C_NOT);  }
               ;
 
 factor: variable
@@ -229,18 +231,18 @@ factor: variable
       ;
 
 term: factor
-    | term multiplicative_operator factor
+    | term multiplicative_operator factor { genNode(C_TERM, 2); insertTopList(); }
     ;
 
-multiplicative_operator: MULTIPLY
-                       | DIV
-                       | AND
+multiplicative_operator: MULTIPLY { genOpSymbol(C_MUL); }
+                       | DIV      { genOpSymbol(C_DIV); }
+                       | AND      { genOpSymbol(C_AND); }
                        ;
 
 function_call_statement: function_call SEMI_COLON
                        ;
 
-function_call: identifier OPEN_PAREN expression_opt CLOSE_PAREN
+function_call: identifier OPEN_PAREN expression_opt CLOSE_PAREN { genNode(C_FUNCTION_CALL, 2); }
              ;
 
 integer: INTEGER { genInt(copy_str(yytext)); }
