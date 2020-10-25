@@ -1,6 +1,5 @@
 %{
-#include <stdio.h>
-
+char *yytext;
 int yylex();
 int yyerror();
 %}
@@ -60,40 +59,38 @@ block: labels types variables functions body
      ;
 
 body: OPEN_BRACE statement_list CLOSE_BRACE
+    | OPEN_BRACE CLOSE_BRACE
     ;
 
-labels:
-      | LABELS identifier_list SEMI_COLON
+labels: LABELS identifier_list SEMI_COLON
+      | empty
       ;
 
-types:
-     | TYPES types_definition
+types: TYPES types_definition
+     | empty
      ;
 
 types_definition: identifier ASSIGN type SEMI_COLON
                 | types_definition identifier ASSIGN type SEMI_COLON
                 ;
 
-variables:
-         | VARS variable_definition variables_definition
+variable_declarations: identifier_list COLON type SEMI_COLON
+                     | variable_declarations identifier_list COLON type SEMI_COLON
+                     ;
+
+variables: VARS variable_declarations
+         | empty
          ;
 
-variables_definition:
-                    | variable_definition variables_definition
-                    ;
-
-variable_definition: identifier_list COLON type SEMI_COLON
-                   ;
-
-functions:
-         | FUNCTIONS function_list
+functions: FUNCTIONS function_list
+         | empty
          ;
 
 function_list: function_list function
              | function
              ;
 
-type: IDENTIFIER type_array
+type: identifier type_array
     ;
 
 type_array:
@@ -103,11 +100,11 @@ type_array:
 formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN
                  ;
 
-formal_parameter_opt:
-                    | formal_parameter_list
+formal_parameter_opt: formal_parameter_list
+                    | empty
                     ;
 
-formal_parameter_list: formal_parameter_opt COMMA formal_parameter
+formal_parameter_list: formal_parameter_list COMMA formal_parameter
                      | formal_parameter
                      ;
 
@@ -122,8 +119,8 @@ expression_parameter: VAR identifier_list COLON identifier
                     | identifier_list COLON identifier
                     ;
 
-statement_list:
-              | statement_list statement
+statement_list: statement_list statement
+              | statement
               ;
 
 statement: unlabeled_statement
@@ -149,11 +146,12 @@ empty_statement: SEMI_COLON
 variable: identifier variable_expression
         ;
 
-variable_expression:
-                   | variable_expression OPEN_BRACKET expression CLOSE_BRACKET
+variable_expression: variable_expression OPEN_BRACKET expression CLOSE_BRACKET
+                   | empty
+                   ;
 
-expression_opt:
-              | expression_list
+expression_opt: expression_list
+              | empty
               ;
 
 expression_list: expression_list COMMA expression
@@ -209,14 +207,14 @@ simple_expression: term
                  | simple_expression additive_operator term
                  ;
 
+unop_expression: unary_operator term
+               | unop_expression additive_operator term
+               ;
+
 additive_operator: PLUS
                  | MINUS
                  | OR
                  ;
-
-unop_expression: unary_operator term
-               | unop_expression additive_operator term
-               ;
 
 unary_operator: PLUS
               | MINUS
@@ -246,4 +244,6 @@ function_call: identifier OPEN_PAREN expression_opt CLOSE_PAREN
 
 integer: INTEGER
        ;
+
+empty:
 %%
