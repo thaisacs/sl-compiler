@@ -25,7 +25,9 @@ typedef enum {
   C_BIN_EXPR,
   C_UN_EXPR,
   C_RETURN,
-  C_EMPTY
+  C_EMPTY,
+  C_PARAM,
+  C_TYPES
 } Categ;
 
 typedef enum {

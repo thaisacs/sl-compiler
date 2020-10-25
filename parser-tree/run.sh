@@ -6,7 +6,6 @@ for n in `seq 1 1 9`
 do
   ./test_tree < all/pr0$n.sl > teste
   diff all/result0$n teste
-  #cat teste
   echo $n'------------------------------------'
   rm teste
 done
@@ -19,21 +18,21 @@ do
   rm teste
 done
 
-#for n in `seq 31 1 37`
-#do
-#  ./test_parser < all/pr$n.sl > teste
-#  diff all/result$n teste
-#  echo $n'------------------------------------'
-#  rm teste
-#done
+for n in `seq 31 1 37`
+do
+  ./test_tree < all/pr$n.sl > teste
+  diff all/result$n teste
+  echo $n'------------------------------------'
+  rm teste
+done
 
-#for n in `seq 41 1 43`
-#do
-#  ./test_parser < all/pr$n.sl > teste
-#  diff all/result$n teste
-#  echo $n'------------------------------------'
-#  rm teste
-#done
+for n in `seq 42 1 43`
+do
+  ./test_tree < all/pr$n.sl > teste
+  diff all/result$n teste
+  echo $n'------------------------------------'
+  rm teste
+done
 rm parser.c
 rm parser.h
 rm scanner.c

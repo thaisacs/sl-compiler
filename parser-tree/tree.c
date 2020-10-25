@@ -123,13 +123,8 @@ void dumpTree(TreeNodePtr p) {
       dumpTree(p->comps[i]);
     }
 
-    TreeNodePtr k = p->next;
-    printf("init\n");
-    while(k) {
-      dumpTree(k);
-      k = k->next;
-    }
-    printf("end\n");
+    if(p->next)
+      dumpTree(p->next);
   }else{
     printf("\nvazio\n");
   }

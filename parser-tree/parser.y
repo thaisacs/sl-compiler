@@ -73,8 +73,8 @@ types: TYPES types_definition
      | empty
      ;
 
-types_definition: identifier ASSIGN type SEMI_COLON
-                | types_definition identifier ASSIGN type SEMI_COLON
+types_definition: identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 2); }
+                | types_definition identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 2); insertTopList(); }
                 ;
 
 variable_declarations: identifier_list COLON type SEMI_COLON { genNode(C_VARS, 2); }
@@ -100,14 +100,14 @@ type_array:
           | type_array OPEN_BRACKET integer CLOSE_BRACKET
           ;
 
-formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN { genEmpty(); }
+formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN
                  ;
 
-formal_parameter_opt:
-                    | formal_parameter_list
+formal_parameter_opt: formal_parameter_list
+                    | empty
                     ;
 
-formal_parameter_list: formal_parameter_opt COMMA formal_parameter
+formal_parameter_list: formal_parameter_list COMMA formal_parameter { insertTopList(); }
                      | formal_parameter
                      ;
 
@@ -115,11 +115,11 @@ formal_parameter: expression_parameter
                 | function_parameter
                 ;
 
-function_parameter: function_header
+function_parameter: function_header { genNode(C_PARAM, 3); }
                   ;
 
-expression_parameter: VAR identifier_list COLON identifier
-                    | identifier_list COLON identifier
+expression_parameter: VAR identifier_list COLON identifier { genNode(C_PARAM, 2); }
+                    | identifier_list COLON identifier { genNode(C_PARAM, 2); }
                     ;
 
 statement_list: statement_list statement { insertTopList(); }
@@ -187,8 +187,8 @@ identifier: IDENTIFIER { genIdent(copy_str(yytext)); }
 goto: GOTO identifier SEMI_COLON { genNode(C_GOTO, 1); }
     ;
 
-return: RETURN SEMI_COLON { genEmpty(); genNode(C_RETURN, 2); }
-      | RETURN expression SEMI_COLON { genNode(C_RETURN, 2); }
+return: RETURN SEMI_COLON { genEmpty(); genNode(C_RETURN, 1); }
+      | RETURN expression SEMI_COLON { genNode(C_RETURN, 1); }
       ;
 
 compound: OPEN_BRACE CLOSE_BRACE { genEmpty(); }
