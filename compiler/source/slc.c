@@ -2,10 +2,10 @@
 
 /*
    Test of the SL compiler.
-   
+
    Returns code execution 0 even in case of errors so as not to
    confuse SuSy.
-   
+
 */
 
 /* Last update: "slc.c: 2020-10-19 (Mon)  13:35:14 -03 (tk)" */
