@@ -6,6 +6,7 @@ SymbEntryPtr newSymbEntry(SymbCateg categ, char *id) {
   SymbEntryPtr symb_entry = (SymbEntryPtr) malloc(sizeof(SymbEntry));
   symb_entry->categ = categ;
   symb_entry->ident = id;
+  symb_entry->descr = (DescrPtr) malloc(sizeof(Descr));
   return symb_entry;
 }
 
@@ -18,15 +19,14 @@ void insertSymbolTable(SymbEntryPtr entry) {
 void printSymbolTable() {
   printf("======================\n");
   SymbEntryPtr p = SymbolTable;
-  while(p) {
+  for ( ; (p!=NULL); p=p->next ) {
     switch(p->categ) {
       case S_CONST:
         printf("const ");
       case S_VARIABLE:
         printf("var ");
     }
-    printf("%s %i\n", p->ident, p->level);
-    p = p->next;
+    printf("%s %i %i %i\n", p->ident, p->level, p->descr->type->constr, p->descr->type->prtv);
   }
   printf("======================\n");
 }

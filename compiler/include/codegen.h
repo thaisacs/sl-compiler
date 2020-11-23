@@ -6,28 +6,33 @@
 #include "symbol_table.h"
 #include "tree.h"
 #include "util.h"
-
-typedef enum { P_VALUE = 1, P_VARIABLE } Passage;
-
-typedef enum {
-  T_PREDEF = 1,
-  T_ARRAY,
-  T_FUNCTION
-} TypeConstr;
-
-
-typedef struct _typeDescr {
-  TypeConstr constr;
-  int size;
-} TypeDescr, *TypeDescrPtr;
+#include "type.h"
 
 void processProgram(void*);
 void processFuncDecl(TreeNodePtr, bool);
 void processVarDecl(TreeNodePtr);
+void processIteration(TreeNodePtr);
+void processStatements(TreeNodePtr);
 
 void genCode0(char*);
 void genCode1(char*, int);
 void genCode2(char*, char*);
 void genCode3(char*, int, int);
+void genCodeLabel(int);
+void genCodeJump(char*, int);
+
+void SemanticError();
+int newLabel();
+
+TypeDescrPtr processInt(TreeNodePtr);
+TypeDescrPtr processVar(TreeNodePtr);
+TypeDescrPtr processExpr(TreeNodePtr);
+TypeDescrPtr processUnExpr(TreeNodePtr);
+TypeDescrPtr processBinExpr(TreeNodePtr);
+TypeDescrPtr predefBool();
+
+char* getOp(TreeNodePtr);
+
+bool relational(char *op);
 
 #endif

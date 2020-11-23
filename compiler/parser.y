@@ -119,7 +119,7 @@ function_parameter: function_header { genNode(C_PARAM, 3); }
                   ;
 
 expression_parameter: VAR identifier_list COLON identifier { genNode(C_PARAM, 2); }
-                    | identifier_list COLON identifier { genNode(C_PARAM, 2); }
+                    | identifier_list COLON identifier     { genNode(C_PARAM, 2); }
                     ;
 
 statement_list: statement_list statement { insertTopList(); }
@@ -140,19 +140,19 @@ unlabeled_statement: assignment
                    | conditional
                    ;
 
-assignment: variable ASSIGN expression SEMI_COLON { genNode(C_ASSIGN, 2); }
+assignment: variable ASSIGN expression SEMI_COLON { genNode(C_ASSIGN, 2);}
           ;
 
 empty_statement: SEMI_COLON { genEmpty(); }
                ;
 
-variable: identifier variable_expression { genNode(C_VAR, 2); }
+variable: identifier { genNode(C_VAR, 1); }
         ;
-
+/*
 variable_expression: variable_expression OPEN_BRACKET expression CLOSE_BRACKET { insertTopList(); }
                    | empty
                    ;
-
+*/
 expression_opt: expression_list
               | empty
               ;
@@ -161,12 +161,12 @@ expression_list: expression_list COMMA expression { insertTopList(); }
                | expression
                ;
 
-expression: simple_expression expression_end
-          | unop_expression expression_end
+expression: simple_expression expression_end { genNode(C_EXPR, 2); }
+          | unop_expression expression_end   { genNode(C_EXPR, 2);  }
           ;
 
-expression_end:
-              | relational_operator simple_expression { genNode(C_BIN_EXPR, 2); }
+expression_end: empty
+              | relational_operator simple_expression { genNode(C_REL_EXPR, 2); }
               ;
 
 relational_operator: LESS_OR_EQUAL     { genOpSymbol(C_LESS_EQUAL);    }
@@ -199,7 +199,7 @@ compound_statement: compound_statement unlabeled_statement { insertTopList(); }
                   | unlabeled_statement
                   ;
 
-conditional: IF OPEN_PAREN expression CLOSE_PAREN compound { genEmpty(); genNode(C_IF, 3); }
+conditional: IF OPEN_PAREN expression CLOSE_PAREN compound { genNode(C_IF, 2); }
            | IF OPEN_PAREN expression CLOSE_PAREN compound ELSE compound { genNode(C_IF, 3); }
            ;
 
@@ -207,11 +207,11 @@ repetitive: WHILE OPEN_PAREN expression CLOSE_PAREN compound { genNode(C_WHILE, 
           ;
 
 simple_expression: term
-                 | simple_expression additive_operator term { genNode(C_BIN_EXPR, 2); insertTopList(); }
+                 | simple_expression additive_operator term { genNode(C_BIN_EXPR, 3); }
                  ;
 
 unop_expression: unary_operator term { genNode(C_UN_EXPR, 2); }
-               | unop_expression additive_operator term { genNode(C_BIN_EXPR, 2); insertTopList(); }
+               | unop_expression additive_operator term { genNode(C_UN_EXPR, 2); insertTopList(); }
                ;
 
 additive_operator: PLUS  { genOpSymbol(C_SUM);  }
@@ -231,7 +231,7 @@ factor: variable
       ;
 
 term: factor
-    | term multiplicative_operator factor { genNode(C_BIN_EXPR, 2); insertTopList(); }
+    | term multiplicative_operator factor { genNode(C_BIN_EXPR, 3); }
     ;
 
 multiplicative_operator: MULTIPLY { genOpSymbol(C_MUL); }

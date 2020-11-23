@@ -1,0 +1,9 @@
+      MAIN
+      ALOC   2
+      STVL   0,0
+      STVL   0,1
+      ADDD
+      STVL   0,0
+      DLOC   2
+      STOP
+      END

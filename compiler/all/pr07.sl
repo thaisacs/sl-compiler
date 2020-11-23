@@ -6,7 +6,7 @@ void Example()
 { 
   y = 100;
   x = y;
-  q = true;
+  //q = true;
   p = q;
   write(x, y);
 }

@@ -1,8 +1,7 @@
 #ifndef TREE_H
 #define TREE_H
 
-#define MAX_COMPS 5
-#define MAX_STACK_SIZE 10
+#define MAX_STACK_SIZE 100
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,6 +23,8 @@ typedef enum {
   C_OPERATOR,
   C_BIN_EXPR,
   C_UN_EXPR,
+  C_REL_EXPR,
+  C_EXPR,
   C_RETURN,
   C_LABEL,
   C_PARAM,
@@ -54,8 +55,8 @@ typedef struct _treeNode {
   int n;
 } TreeNode, *TreeNodePtr;
 
-extern TreeNodePtr stack[MAX_STACK_SIZE];
-extern int top;
+//extern TreeNodePtr stack[MAX_STACK_SIZE];
+//extern int top;
 
 void *getTree();
 void counts(void*, int*, int*, int*, int*, int*);

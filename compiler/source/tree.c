@@ -107,10 +107,8 @@ void insertTopList() {
 }
 
 void dumpNode(TreeNodePtr p) {
-  printf("\ncateg: %i\n", p->categ);
-  printf("n: %i\n", p->n);
   if(p->str)
-    printf("str: %s\n", p->str);
+    printf("str: %s %i\n", p->str, p->categ);
 }
 
 void dumpTree(TreeNodePtr p) {
@@ -122,8 +120,9 @@ void dumpTree(TreeNodePtr p) {
       dumpTree(p->comps[i]);
     }
 
-    if(p->next)
+    if(p->next) {
       dumpTree(p->next);
+    }
   }else{
     printf("\nvazio\n");
   }

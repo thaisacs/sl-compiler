@@ -1,8 +1,10 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
+#include <string.h>
 #include <stdlib.h>
-#include <codegen.h>
+#include <stdio.h>
+#include "type.h"
 
 typedef enum {
   S_CONST = 1,
@@ -13,11 +15,18 @@ typedef enum {
   S_TYPE
 } SymbCateg;
 
+typedef struct _descr {
+  int displ;
+  Passage pass;
+  TypeDescrPtr type;
+} Descr, *DescrPtr;
+
 typedef struct _symbEntry {
   SymbCateg categ;
   char *ident;
   int level;
   struct _symbEntry *next;
+  DescrPtr descr;
 } SymbEntry, *SymbEntryPtr;
 
 SymbEntryPtr newSymbEntry(SymbCateg, char*);
