@@ -17,17 +17,34 @@ int newLabel() {
   return label;
 }
 
-char* getOp(TreeNodePtr p) {
-  if(!strcmp(p->str, "&&"))
-    return "LAND";
-  else if(!strcmp(p->str, "+"))
-    return "ADDD";
-  else if(!strcmp(p->str, "*"))
-    return "MULT";
-  else if(!strcmp(p->str, "/"))
-    return "DIVI";
-  else
-    return "ERROR";
+TypeDescrPtr getOp(TreeNodePtr p) {
+  if(!strcmp(p->str, "&&")) {
+    genCode0("LAND");
+    return predefBool();
+  }else if(!strcmp(p->str, "+")) {
+    genCode0("ADDD");
+    return predefInt();
+  }else if(!strcmp(p->str, "*")) {
+    genCode0("MULT");
+    return predefInt();
+  }else if(!strcmp(p->str, "/")) {
+    genCode0("DIVI");
+    return predefInt();
+  }else if(!strcmp(p->str, "-")) {
+    genCode0("SUBT");
+    return predefInt();
+  }else if(!strcmp(p->str, "<")) {
+    genCode0("LESS");
+    return predefBool();
+  }else if(!strcmp(p->str, ">")) {
+    genCode0("GRTR");
+    return predefBool();
+  }else if(!strcmp(p->str, "!")) {
+    genCode0("LNOT");
+    return predefBool();
+  }
+  printf("ERROR %s\n", p->str);
+  exit(1);
 }
 
 void genCode0(char *cmd) {
@@ -35,7 +52,7 @@ void genCode0(char *cmd) {
 }
 
 void genCode1(char *cmd, int counter) {
-  if(counter)
+  //if(counter)
     printf("      %s   %i\n", cmd, counter);
 }
 
@@ -47,8 +64,16 @@ void genCode3(char *cmd, int a, int b) {
   printf("      %s   %i,%i\n", cmd, a, b);
 }
 
-void genCodeLabel(int label) {
-  printf("L%i:   NOOP\n", label);
+void genCode4(char *cmd, int a, int b) {
+  printf("      %s   L%i,%i\n", cmd, a, b);
+}
+
+void genCodeLabel(int label, char *cmd) {
+  printf("L%i:   %s\n", label, cmd);
+}
+
+void genJump(int label) {
+  printf("      JUMP   L%i\n", label);
 }
 
 char* getIdent(TreeNodePtr p) {
@@ -70,15 +95,30 @@ TypeDescrPtr predefInt() {
 void processIteration(TreeNodePtr p) {
   int label1 = newLabel();
   int label2 = newLabel();
-  TypeDescrPtr t;
-  genCodeLabel(label1);
-  t = processExpr(p->comps[0]);
+  genCodeLabel(label1, "NOOP");
+  TypeDescrPtr t = processExpr(p->comps[0]);
   if(!compatibleTypes(t, predefBool()))
     SemanticError();
   genCodeJump("JMPF", label2);
   processStatements(p->comps[1]);
   genCodeJump("JUMP", label1);
-  genCodeLabel(label2);
+  genCodeLabel(label2, "NOOP");
+}
+
+void processCondition(TreeNodePtr p) {
+  int label1 = newLabel();
+  int label2 = newLabel();
+  load = true;
+  TypeDescrPtr t = processExpr(p->comps[0]);
+  load = false;
+  if(!compatibleTypes(t, predefBool()))
+    SemanticError();
+  genCodeJump("JMPF", label1);
+  processStatements(p->comps[1]);
+  genCodeJump("JUMP", label2);
+  genCodeLabel(label1, "NOOP");
+  processStatements(p->comps[2]);
+  genCodeLabel(label2, "NOOP");
 }
 
 void processVariables(TreeNodePtr p) {
@@ -104,7 +144,7 @@ void processVarDecl(TreeNodePtr p) {
 }
 
 TypeDescrPtr processExpr(TreeNodePtr p) {
-  TreeNodePtr pvars;
+  TypeDescrPtr t;
   switch(p->categ) {
     case C_INT:
       return processInt(p);
@@ -117,10 +157,32 @@ TypeDescrPtr processExpr(TreeNodePtr p) {
     case C_EXPR:
       if(!p->comps[1])
         return processExpr(p->comps[0]);
+      else {
+        load = true;
+        processExpr(p->comps[0]);
+        t = processExpr(p->comps[1]);
+        load = false;
+        return t;
+      }
     case C_REL_EXPR:
-      return processExpr(p);
+      return processRelational(p);
+    case C_IDENT:
+      return processIdent(p);
   }
   return predefInt();
+}
+
+TypeDescrPtr processIdent(TreeNodePtr p) {
+  SymbEntryPtr ste = searchSte(p->str);
+  return predefBool();
+}
+
+TypeDescrPtr processRelational(TreeNodePtr p) {
+  TypeDescrPtr t = processExpr(p->comps[1]);
+  TypeDescrPtr op = getOp(p->comps[0]);
+  //if (!compatibleTypesBinOp(op,t0,t1))
+  //  SemanticError();
+  return predefBool();
 }
 
 TypeDescrPtr processInt(TreeNodePtr p) {
@@ -129,46 +191,46 @@ TypeDescrPtr processInt(TreeNodePtr p) {
   return type;
 }
 
+TypeDescrPtr processBool(TreeNodePtr p) {
+  TypeDescrPtr type = newTypeDescr(T_PREDEF, T_BOOL, 1);
+  return type;
+}
+
 TypeDescrPtr processVar(TreeNodePtr p) {
   char *id = p->comps[0]->str;
-  SymbEntryPtr ste = searchSte(id);
-  if(load)
-    genCode3("LDVL", ste->level, ste->descr->displ);
-  else
-    genCode3("STVL", ste->level, ste->descr->displ);
-  return ste->descr->type;
+  if(!strcmp(id, "true")) {
+    genCode2("LDCT", "1");
+    return predefBool();
+  }else if(!strcmp(id, "false")) {
+    genCode2("LDCT", "0");
+    return predefBool();
+  }else {
+    SymbEntryPtr ste = searchSte(id);
+    if(load)
+      genCode3("LDVL", ste->level, ste->descr->displ);
+    else
+      genCode3("STVL", ste->level, ste->descr->displ);
+    return ste->descr->type;
+  }
 }
 
 TypeDescrPtr processUnExpr(TreeNodePtr p) {
-  //char *op = getOp(p->comps[0]);
-  //TypeDescrPtr t = processExpr(p->comps[1]);
+  TypeDescrPtr op = getOp(p->comps[0]);
+  TypeDescrPtr t = processExpr(p->comps[1]);
   //if (!compatibleTypesUnOp(op,t))
   //  SemanticError();
-  //genCode0(mepaUnInstr(op));
-  //return t;
+  return op;
 }
 
 TypeDescrPtr processBinExpr(TreeNodePtr p) {
   if(p) {
-  TypeDescrPtr t0 = processExpr(p->comps[0]);
-  TypeDescrPtr t1 = processExpr(p->comps[2]);
-  char *op = getOp(p->comps[1]);
-  //if (!compatibleTypesBinOp(op,t0,t1))
-  //  SemanticError();
-  //genCode0(mepaBinInstr(op));
-  genCode0(op);
-  if(relational(op))
-    return predefBool();
-  else
-    return predefInt();
+    TypeDescrPtr t0 = processExpr(p->comps[0]);
+    TypeDescrPtr t1 = processExpr(p->comps[2]);
+    TypeDescrPtr op = getOp(p->comps[1]);
+    //if (!compatibleTypesBinOp(op,t0,t1))
+    //  SemanticError();
+    return op;
   }
-}
-
-bool relational(char *op) {
-  if(!strcmp(op, ">")) {
-    return true;
-  }
-  return false;
 }
 
 void processAssign(TreeNodePtr p) {
@@ -182,7 +244,9 @@ void processAssign(TreeNodePtr p) {
   if((ste->categ != S_VARIABLE) && (ste->categ != S_PARAMETER))
     SemanticError();
   tvar = ste->descr->type;
+  load = true;
   texpr = processExpr(pexpr);
+  load = false;
   if(!compatibleTypes(tvar, texpr))
     SemanticError(); // incompatible types
   if((ste->categ == S_PARAMETER) && (ste->descr->pass == P_VARIABLE))
@@ -207,7 +271,41 @@ void processFunctionCall(TreeNodePtr p) {
       genCode0("READ");
       texpr = processExpr(pexpr);
     }
+  }else {
+    SymbEntryPtr ste = searchSte(funcall->str);
+    genCode4("CFUN", ste->descr->entLabel, ste->descr->displ);
   }
+}
+
+void processFunctions(TreeNodePtr p) {
+  TreeNodePtr pvars = p;
+  for ( ; (pvars!=NULL); pvars=pvars->next ) {
+    processFuncDecl(pvars, false);
+  }
+}
+
+void processLabels(TreeNodePtr p) {
+  TreeNodePtr pvars = p;
+  for ( ; (pvars!=NULL); pvars=pvars->next ) {
+    char *ident = pvars->comps[0]->str;
+    int id = newLabel();
+    SymbEntryPtr ste;
+    ste = newSymbEntry(S_LABEL, ident);
+    ste->level = id;
+    //ste->descr->displ = currentDispl;
+    ste->descr->type = NULL;
+    insertSymbolTable(ste);
+  }
+}
+
+void processGoto(TreeNodePtr p) {
+  SymbEntryPtr ste = searchSte(p->comps[0]->str);
+  genJump(ste->level);
+}
+
+void processLabel(TreeNodePtr p) {
+  SymbEntryPtr ste = searchSte(p->comps[0]->str);
+  genCode0("ENLB   0,0");
 }
 
 void processStatements(TreeNodePtr p) {
@@ -222,12 +320,17 @@ void processStatements(TreeNodePtr p) {
           processFunctionCall(pvars);
           break;
         case C_WHILE:
-          processIteration(p);
+          processIteration(pvars);
+          break;
+        case C_IF:
+          processCondition(pvars);
           break;
         case C_GOTO:
-          puts("goto");
-        default:
-          printf("%i\n", pvars->categ);
+          processGoto(pvars);
+          break;
+        case C_LABEL:
+          processLabel(pvars);
+          break;
       }
     }
   }
@@ -239,26 +342,56 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   int lastDispl = -4, entLabel, retLabel;
   SymbEntryPtr formals, func;
 
-  currentLevel++;
-  if(ismain)
-    genCode0("MAIN");
+  if(p->comps[3]->comps[3] || !ismain) {
+    entLabel = newLabel();
+  }
 
-  //processLabels(p->comps[3]);
+  if(!ismain)
+    retLabel = newLabel();
+
+  currentLevel++;
+  if (p->comps[0])
+    resType = getType(p->comps[0]);
+  if (resType)
+    lastDispl -= resType->size;
+
+  func = newSymbEntry(S_FUNCTION, fname);
+  func->descr->result = resType;
+  //func->descr->params = formals;
+  func->level = currentLevel-1;
+  //func->descr->displ = lastDispl;
+  func->descr->displ = 0;
+  func->descr->entLabel = entLabel;
+  insertSymbolTable(func);
+
+  if(ismain) {
+    genCode0("MAIN");
+  }else {
+    genCodeLabel(entLabel, "ENFN   1");
+  }
+
+  if(p->comps[3]->comps[0])
+    processLabels(p->comps[3]);
   //processTypes(p->comps[4]);
   processVariables(p->comps[3]->comps[2]);
-  genCode1("ALOC", globalDisplCounter);
+  if(ismain && globalDisplCounter)
+    genCode1("ALOC", globalDisplCounter);
   //loadFormalsSymbolTable(formals);
-  //processFunctions(p->comps[2]);
+  if(p->comps[3]->comps[3]) {
+    genCode0("JUMP   L1");
+    processFunctions(p->comps[3]->comps[3]);
+    genCodeLabel(entLabel, "NOOP");
+  }
   processStatements(p->comps[3]->comps[4]);
 
-  //printSymbolTable();
+  if(currentDispl && ismain)
+    genCode1("DLOC", currentDispl);
 
-  //genCodeLabel(retLabel);
-  genCode1("DLOC", currentDispl);
   if(ismain) {
     genCode0("STOP\n      END");
   }else {
-    //genCode1("RTRN",-lastDispl-4);
+    genCodeLabel(retLabel, "NOOP");
+    genCode1("RTRN", -lastDispl-4);
   }
   currentLevel--;
   //restoreSymbTable();

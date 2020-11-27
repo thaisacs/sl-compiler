@@ -1,9 +1,0 @@
-      MAIN
-      ALOC   2
-      LDCT   10
-      STVL   0,0
-      LDCT   15
-      STVL   0,1
-L1:   NOOP
-não
-Semantic error.

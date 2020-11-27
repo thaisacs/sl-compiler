@@ -6,7 +6,33 @@ mv parser.h include
 mv parser.c source
 mv scanner.c source
 
-./slc  < all/pr08.sl
+./slc < all/pr16.sl
+
+#for n in `seq 1 1 9`
+#do
+#  echo $n'------------------------------------'
+#  ./slc  < all/pr0$n.sl > progNN.mep
+#  python3 mepa/mepa.py --limit 12000 --progfile progNN.mep < all/data0$n.in > progNN.res
+#  echo "###############################"
+#  diff all/pr0$n.res progNN.res
+#  echo "###############################"
+#  rm progNN.res
+#  rm progNN.mep
+#  echo $n'------------------------------------'
+#done
+#
+#for n in `seq 10 1 15`
+#do
+#  echo $n'------------------------------------'
+#  ./slc  < all/pr$n.sl > progNN.mep
+#  python3 mepa/mepa.py --limit 12000 --progfile progNN.mep < all/data$n.in > progNN.res
+#  echo "###############################"
+#  diff all/pr$n.res progNN.res
+#  echo "###############################"
+#  rm progNN.res
+#  rm progNN.mep
+#  echo $n'------------------------------------'
+#done
 
 #for n in `seq 1 1 9`
 #do
@@ -16,7 +42,7 @@ mv scanner.c source
 #  echo $n'------------------------------------'
 #done
 
-#for n in `seq 10 1 27`
+#for n in `seq 10 1 14`
 #do
 #  echo $n'------------------------------------'
 #  ./slc  < all/pr$n.sl > results/pr$n.mep

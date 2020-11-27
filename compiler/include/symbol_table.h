@@ -19,6 +19,8 @@ typedef struct _descr {
   int displ;
   Passage pass;
   TypeDescrPtr type;
+  TypeDescrPtr result;
+  int entLabel;
 } Descr, *DescrPtr;
 
 typedef struct _symbEntry {

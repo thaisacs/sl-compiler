@@ -1,9 +1,0 @@
-      MAIN
-      ALOC   1
-      LDCT   100
-      STVL   0,0
-      LDVL   0,0
-      PRNT
-      DLOC   1
-      STOP
-      END

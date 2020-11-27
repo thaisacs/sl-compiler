@@ -62,8 +62,8 @@ void counts(void *p, int *functions, int *funcalls,
   *ifs = 0;
   *bin = 0;
 
-  //test(p, functions, funcalls, whiles, ifs, bin);
-  dumpTree(p);
+  test(p, functions, funcalls, whiles, ifs, bin);
+  //dumpTree(p);
 }
 
 void genNode3(Categ cat, int n, char *s) {

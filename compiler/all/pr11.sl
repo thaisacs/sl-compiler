@@ -4,11 +4,12 @@ void Example()
   vars x, y: integer;
        p: boolean;
 {
-  x = 10; y = 20;
+  x = 10;
+  y = 20;
   p = (x<y);
-  if (p) 
+  if (p)
       { write(x, y); }
-  else   
+  else
       { write(y, x); }
   write(x+y);
 }

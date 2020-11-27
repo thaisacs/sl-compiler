@@ -18,21 +18,23 @@ void genCode0(char*);
 void genCode1(char*, int);
 void genCode2(char*, char*);
 void genCode3(char*, int, int);
-void genCodeLabel(int);
+void genCodeLabel(int, char*);
 void genCodeJump(char*, int);
 
 void SemanticError();
 int newLabel();
 
 TypeDescrPtr processInt(TreeNodePtr);
+TypeDescrPtr processIdent(TreeNodePtr);
 TypeDescrPtr processVar(TreeNodePtr);
 TypeDescrPtr processExpr(TreeNodePtr);
 TypeDescrPtr processUnExpr(TreeNodePtr);
 TypeDescrPtr processBinExpr(TreeNodePtr);
+TypeDescrPtr processRelational(TreeNodePtr);
+
 TypeDescrPtr predefBool();
+TypeDescrPtr predefInt();
 
-char* getOp(TreeNodePtr);
-
-bool relational(char *op);
+TypeDescrPtr getOp(TreeNodePtr);
 
 #endif

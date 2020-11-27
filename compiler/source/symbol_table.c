@@ -26,7 +26,7 @@ void printSymbolTable() {
       case S_VARIABLE:
         printf("var ");
     }
-    printf("%s %i %i %i\n", p->ident, p->level, p->descr->type->constr, p->descr->type->prtv);
+    //printf("%s %i %i %i\n", p->ident, p->level, p->descr->type->constr, p->descr->type->prtv);
   }
   printf("======================\n");
 }
