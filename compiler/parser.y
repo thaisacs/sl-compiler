@@ -211,7 +211,7 @@ simple_expression: term
                  ;
 
 unop_expression: unary_operator term { genNode(C_UN_EXPR, 2); }
-               | unop_expression additive_operator term { genNode(C_UN_EXPR, 2); insertTopList(); }
+               | unop_expression additive_operator term { genNode(C_UN_EXPR, 3); }
                ;
 
 additive_operator: PLUS  { genOpSymbol(C_SUM);  }

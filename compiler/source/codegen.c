@@ -215,11 +215,22 @@ TypeDescrPtr processVar(TreeNodePtr p) {
 }
 
 TypeDescrPtr processUnExpr(TreeNodePtr p) {
-  TypeDescrPtr op = getOp(p->comps[0]);
-  TypeDescrPtr t = processExpr(p->comps[1]);
+  TypeDescrPtr t0, t1, t2;
+  t0 = processExpr(p->comps[0]);
+  t1 = processExpr(p->comps[1]);
+  if(p->comps[2])
+    t2 = processExpr(p->comps[2]);
+  if(p->comps[0]->str) {
+    if(!strcmp(p->comps[0]->str, "-"))
+      genCode0("NEGT");
+  }
+  if(p->comps[1]->str) {
+    if(!strcmp(p->comps[1]->str, "+"))
+      genCode0("ADDD");
+  }
   //if (!compatibleTypesUnOp(op,t))
   //  SemanticError();
-  return op;
+  return predefInt();
 }
 
 TypeDescrPtr processBinExpr(TreeNodePtr p) {
