@@ -55,9 +55,6 @@ typedef struct _treeNode {
   int n;
 } TreeNode, *TreeNodePtr;
 
-//extern TreeNodePtr stack[MAX_STACK_SIZE];
-//extern int top;
-
 void *getTree();
 void counts(void*, int*, int*, int*, int*, int*);
 void genNode3(Categ, int, char*);

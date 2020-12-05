@@ -52,8 +52,7 @@ void genCode0(char *cmd) {
 }
 
 void genCode1(char *cmd, int counter) {
-  //if(counter)
-    printf("      %s   %i\n", cmd, counter);
+  printf("      %s   %i\n", cmd, counter);
 }
 
 void genCode2(char *cmd, char *expr) {
@@ -155,9 +154,9 @@ TypeDescrPtr processExpr(TreeNodePtr p) {
     case C_BIN_EXPR:
       return processBinExpr(p);
     case C_EXPR:
-      if(!p->comps[1])
+      if(!p->comps[1]) {
         return processExpr(p->comps[0]);
-      else {
+      }else {
         load = true;
         processExpr(p->comps[0]);
         t = processExpr(p->comps[1]);
@@ -168,6 +167,9 @@ TypeDescrPtr processExpr(TreeNodePtr p) {
       return processRelational(p);
     case C_IDENT:
       return processIdent(p);
+    case C_FUNCTION_CALL:
+      processFunctionCall(p);
+      return predefInt();
   }
   return predefInt();
 }
@@ -274,8 +276,8 @@ void processFunctionCall(TreeNodePtr p) {
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
       load = true;
       texpr = processExpr(pexpr);
-      genCode0("PRNT");
       load = false;
+      genCode0("PRNT");
     }
   }else if(!strcmp(funcall->str, "read")) {
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
@@ -284,7 +286,14 @@ void processFunctionCall(TreeNodePtr p) {
     }
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
-    genCode4("CFUN", ste->descr->entLabel, ste->descr->displ);
+    if(ste->descr->type)
+      genCode1("ALOC", 1);
+    for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
+      load = true;
+      texpr = processExpr(pexpr);
+      load = false;
+    }
+    genCode4("CFUN", ste->descr->entLabel, ste->level-1);
   }
 }
 
@@ -342,7 +351,38 @@ void processStatements(TreeNodePtr p) {
         case C_LABEL:
           processLabel(pvars);
           break;
+        case C_RETURN:
+          processReturn(pvars);
+          break;
       }
+    }
+  }
+}
+
+void processReturn(TreeNodePtr p) {
+  if(p->comps[0]) {
+    load = true;
+    processExpr(p->comps[0]);
+    load = false;
+    SymbEntryPtr ste = searchLastFunction();
+    genCode3("STVL", ste->level, ste->descr->displ);
+  }
+
+  genCode0("JUMP   L3");
+}
+
+void processFormals(TreeNodePtr p, int *lastDispl) {
+  if(p) {
+    TreeNodePtr pvars = p->comps[0];
+    for ( ; (pvars!=NULL); pvars=pvars->next ) {
+      char *id = getIdent(pvars);
+      SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
+      TypeDescrPtr ptype = getType(p->comps[1]);
+      ste->level = currentLevel;
+      (*lastDispl)--;
+      ste->descr->displ = *lastDispl;
+      ste->descr->type = ptype;
+      insertSymbolTable(ste);
     }
   }
 }
@@ -353,9 +393,8 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   int lastDispl = -4, entLabel, retLabel;
   SymbEntryPtr formals, func;
 
-  if(p->comps[3]->comps[3] || !ismain) {
+  if(p->comps[3]->comps[3] || !ismain)
     entLabel = newLabel();
-  }
 
   if(!ismain)
     retLabel = newLabel();
@@ -363,17 +402,25 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   currentLevel++;
   if (p->comps[0])
     resType = getType(p->comps[0]);
-  if (resType)
+
+  processFormals(p->comps[2], &lastDispl);
+
+  if (resType) {
     lastDispl -= resType->size;
+  }
 
   func = newSymbEntry(S_FUNCTION, fname);
   func->descr->result = resType;
   //func->descr->params = formals;
-  func->level = currentLevel-1;
-  //func->descr->displ = lastDispl;
-  func->descr->displ = 0;
+  func->level = currentLevel;
+  func->descr->displ = lastDispl;
+  func->descr->type = resType;
   func->descr->entLabel = entLabel;
   insertSymbolTable(func);
+
+  if (resType) {
+    lastDispl += resType->size;
+  }
 
   if(ismain) {
     genCode0("MAIN");
@@ -393,6 +440,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     processFunctions(p->comps[3]->comps[3]);
     genCodeLabel(entLabel, "NOOP");
   }
+
   processStatements(p->comps[3]->comps[4]);
 
   if(currentDispl && ismain)
@@ -404,6 +452,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     genCodeLabel(retLabel, "NOOP");
     genCode1("RTRN", -lastDispl-4);
   }
+
   currentLevel--;
   //restoreSymbTable();
   //if(p->comps[0] != NULL)

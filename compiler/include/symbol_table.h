@@ -35,5 +35,6 @@ SymbEntryPtr newSymbEntry(SymbCateg, char*);
 void insertSymbolTable(SymbEntryPtr);
 void printSymbolTable();
 SymbEntryPtr searchSte(char*);
+SymbEntryPtr searchLastFunction();
 
 #endif

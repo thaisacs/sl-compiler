@@ -224,9 +224,9 @@ unary_operator: PLUS  { genOpSymbol(C_SUM);  }
               | NOT   { genOpSymbol(C_NOT);  }
               ;
 
-factor: variable
+factor: function_call
+      | variable
       | integer
-      | function_call
       | OPEN_PAREN expression CLOSE_PAREN
       ;
 

@@ -13,6 +13,9 @@ void processFuncDecl(TreeNodePtr, bool);
 void processVarDecl(TreeNodePtr);
 void processIteration(TreeNodePtr);
 void processStatements(TreeNodePtr);
+void processFunctionCall(TreeNodePtr);
+void processReturn(TreeNodePtr);
+void processFormals(TreeNodePtr, int*);
 
 void genCode0(char*);
 void genCode1(char*, int);

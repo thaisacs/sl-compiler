@@ -40,3 +40,13 @@ SymbEntryPtr searchSte(char *id) {
   }
   return NULL;
 }
+
+SymbEntryPtr searchLastFunction() {
+  SymbEntryPtr p = SymbolTable;
+  for ( ; (p!=NULL); p=p->next ) {
+    if(p->categ == S_FUNCTION) {
+      return p;
+    }
+  }
+  return NULL;
+}

@@ -6,7 +6,9 @@ mv parser.h include
 mv parser.c source
 mv scanner.c source
 
-./slc < all/pr16.sl
+echo "###############################"
+./slc < all/pr22.sl
+echo "###############################"
 
 #for n in `seq 1 1 9`
 #do
@@ -34,21 +36,21 @@ mv scanner.c source
 #  echo $n'------------------------------------'
 #done
 
-#for n in `seq 1 1 9`
-#do
-#  echo $n'------------------------------------'
-#  ./slc  < all/pr0$n.sl > results/pr0$n.mep
-#  diff all/pr0$n.mep results/pr0$n.mep
-#  echo $n'------------------------------------'
-#done
+for n in `seq 1 1 9`
+do
+  echo $n'------------------------------------'
+  ./slc  < all/pr0$n.sl > results/pr0$n.mep
+  diff all/pr0$n.mep results/pr0$n.mep
+  echo $n'------------------------------------'
+done
 
-#for n in `seq 10 1 14`
-#do
-#  echo $n'------------------------------------'
-#  ./slc  < all/pr$n.sl > results/pr$n.mep
-#  diff all/pr$n.mep results/pr$n.mep
-#  echo $n'------------------------------------'
-#done
+for n in `seq 10 1 14`
+do
+  echo $n'------------------------------------'
+  ./slc  < all/pr$n.sl > results/pr$n.mep
+  diff all/pr$n.mep results/pr$n.mep
+  echo $n'------------------------------------'
+done
 
 #for n in `seq 31 1 37`
 #do
