@@ -50,3 +50,16 @@ SymbEntryPtr searchLastFunction() {
   }
   return NULL;
 }
+
+void restoreSymbTable() {
+  int cleanLevel = SymbolTable->level;
+  while(SymbolTable->level == cleanLevel) {
+    if(SymbolTable->categ != S_FUNCTION) {
+      SymbEntryPtr e = SymbolTable;
+      SymbolTable = SymbolTable->next;
+      free(e);
+    }else {
+      break;
+    }
+  }
+}

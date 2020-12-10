@@ -15,14 +15,18 @@ void processIteration(TreeNodePtr);
 void processStatements(TreeNodePtr);
 void processFunctionCall(TreeNodePtr);
 void processReturn(TreeNodePtr);
-void processFormals(TreeNodePtr, int*);
+
+SymbEntryPtr processFormals(TreeNodePtr, int*);
 
 void genCode0(char*);
 void genCode1(char*, int);
 void genCode2(char*, char*);
 void genCode3(char*, int, int);
 void genCodeLabel(int, char*);
+void genCodeEnfn(int, char*, int);
 void genCodeJump(char*, int);
+
+void compatibleTypesFunctionCall(SymbEntryPtr, TreeNodePtr);
 
 void SemanticError();
 int newLabel();

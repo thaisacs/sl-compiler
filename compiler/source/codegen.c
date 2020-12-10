@@ -1,6 +1,7 @@
 #include "codegen.h"
 
 int currentLevel = -1, currentDispl = 0, globalDisplCounter = 0;
+int currentEnfn = 0;
 SymbEntryPtr SymbTable = NULL;
 bool load = false;
 
@@ -65,6 +66,10 @@ void genCode3(char *cmd, int a, int b) {
 
 void genCode4(char *cmd, int a, int b) {
   printf("      %s   L%i,%i\n", cmd, a, b);
+}
+
+void genCodeEnfn(int label, char *cmd, int enfn) {
+  printf("L%i:   %s   %i\n", label, cmd, enfn);
 }
 
 void genCodeLabel(int label, char *cmd) {
@@ -286,6 +291,7 @@ void processFunctionCall(TreeNodePtr p) {
     }
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
+    compatibleTypesFunctionCall(ste, pexpr);
     if(ste->descr->type)
       genCode1("ALOC", 1);
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
@@ -298,10 +304,12 @@ void processFunctionCall(TreeNodePtr p) {
 }
 
 void processFunctions(TreeNodePtr p) {
-  TreeNodePtr pvars = p;
+  currentEnfn++;
+  TreeNodePtr pvars = invertList(p);
   for ( ; (pvars!=NULL); pvars=pvars->next ) {
     processFuncDecl(pvars, false);
   }
+  currentEnfn--;
 }
 
 void processLabels(TreeNodePtr p) {
@@ -367,22 +375,25 @@ void processReturn(TreeNodePtr p) {
     SymbEntryPtr ste = searchLastFunction();
     genCode3("STVL", ste->level, ste->descr->displ);
   }
-
   genCode0("JUMP   L3");
 }
 
-void processFormals(TreeNodePtr p, int *lastDispl) {
-  if(p) {
-    TreeNodePtr pvars = p->comps[0];
-    for ( ; (pvars!=NULL); pvars=pvars->next ) {
-      char *id = getIdent(pvars);
-      SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
-      TypeDescrPtr ptype = getType(p->comps[1]);
-      ste->level = currentLevel;
-      (*lastDispl)--;
-      ste->descr->displ = *lastDispl;
-      ste->descr->type = ptype;
-      insertSymbolTable(ste);
+SymbEntryPtr processFormals(TreeNodePtr p, int *lastDispl) {
+  TreeNodePtr t = p->comps[2];
+  for ( ; (t!=NULL); t=t->next ) {
+    TreeNodePtr p = t;
+    if(p) {
+      TreeNodePtr pvars = p->comps[0];
+      for ( ; (pvars!=NULL); pvars=pvars->next ) {
+        char *id = getIdent(pvars);
+        SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
+        TypeDescrPtr ptype = getType(p->comps[1]);
+        ste->level = currentLevel;
+        (*lastDispl)--;
+        ste->descr->displ = *lastDispl;
+        ste->descr->type = ptype;
+        insertSymbolTable(ste);
+      }
     }
   }
 }
@@ -390,20 +401,22 @@ void processFormals(TreeNodePtr p, int *lastDispl) {
 void processFuncDecl(TreeNodePtr p, bool ismain) {
   char *fname = getIdent(p->comps[1]);
   TypeDescrPtr resType = NULL, funType;
-  int lastDispl = -4, entLabel, retLabel;
+  int lastDispl = -4, entLabel, retLabel, midLabel;
   SymbEntryPtr formals, func;
 
   if(p->comps[3]->comps[3] || !ismain)
     entLabel = newLabel();
 
-  if(!ismain)
+  if(!ismain) {
     retLabel = newLabel();
+    midLabel = newLabel();
+  }
 
   currentLevel++;
   if (p->comps[0])
     resType = getType(p->comps[0]);
 
-  processFormals(p->comps[2], &lastDispl);
+  formals = processFormals(p, &lastDispl);
 
   if (resType) {
     lastDispl -= resType->size;
@@ -425,7 +438,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   if(ismain) {
     genCode0("MAIN");
   }else {
-    genCodeLabel(entLabel, "ENFN   1");
+    genCodeEnfn(entLabel, "ENFN", currentEnfn);
   }
 
   if(p->comps[3]->comps[0])
@@ -436,7 +449,10 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     genCode1("ALOC", globalDisplCounter);
   //loadFormalsSymbolTable(formals);
   if(p->comps[3]->comps[3]) {
-    genCode0("JUMP   L1");
+    if(!ismain)
+      genCodeJump("JUMP", midLabel);
+    else
+      genCodeJump("JUMP", entLabel);
     processFunctions(p->comps[3]->comps[3]);
     genCodeLabel(entLabel, "NOOP");
   }
@@ -454,7 +470,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   }
 
   currentLevel--;
-  //restoreSymbTable();
+  restoreSymbTable();
   //if(p->comps[0] != NULL)
   //  resType = getType(p->comps[0]);
 }
@@ -462,4 +478,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
 void processProgram(void *p) {
   //dumpTree(p);
   processFuncDecl(p, true);
+}
+
+void compatibleTypesFunctionCall(SymbEntryPtr ste, TreeNodePtr p) {
 }

@@ -34,6 +34,7 @@ typedef struct _symbEntry {
 SymbEntryPtr newSymbEntry(SymbCateg, char*);
 void insertSymbolTable(SymbEntryPtr);
 void printSymbolTable();
+void restoreSymbTable();
 SymbEntryPtr searchSte(char*);
 SymbEntryPtr searchLastFunction();
 
