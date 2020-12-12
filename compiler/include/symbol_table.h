@@ -26,6 +26,7 @@ typedef struct _descr {
 typedef struct _symbEntry {
   SymbCateg categ;
   char *ident;
+  bool open;
   int level;
   struct _symbEntry *next;
   DescrPtr descr;

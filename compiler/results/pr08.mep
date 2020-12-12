@@ -1,5 +1,0 @@
-      MAIN
-      JUMP   L1
-      ENLB   0,0
-      STOP
-      END

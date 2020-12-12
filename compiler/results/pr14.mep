@@ -2,6 +2,7 @@
       ALOC   1
       JUMP   L1
 L2:   ENFN   1
+      JUMP   L3
 L3:   NOOP
       RTRN   0
 L1:   NOOP

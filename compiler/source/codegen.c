@@ -245,8 +245,8 @@ TypeDescrPtr processBinExpr(TreeNodePtr p) {
     TypeDescrPtr t0 = processExpr(p->comps[0]);
     TypeDescrPtr t1 = processExpr(p->comps[2]);
     TypeDescrPtr op = getOp(p->comps[1]);
-    //if (!compatibleTypesBinOp(op,t0,t1))
-    //  SemanticError();
+    if (!compatibleTypesBinOp(op, t0, t1))
+      SemanticError();
     return op;
   }
 }
@@ -291,7 +291,7 @@ void processFunctionCall(TreeNodePtr p) {
     }
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
-    compatibleTypesFunctionCall(ste, pexpr);
+    //compatibleTypesFunctionCall(ste, pexpr);
     if(ste->descr->type)
       genCode1("ALOC", 1);
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
@@ -375,7 +375,6 @@ void processReturn(TreeNodePtr p) {
     SymbEntryPtr ste = searchLastFunction();
     genCode3("STVL", ste->level, ste->descr->displ);
   }
-  genCode0("JUMP   L3");
 }
 
 SymbEntryPtr processFormals(TreeNodePtr p, int *lastDispl) {
@@ -407,10 +406,8 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   if(p->comps[3]->comps[3] || !ismain)
     entLabel = newLabel();
 
-  if(!ismain) {
+  if(!ismain)
     retLabel = newLabel();
-    midLabel = newLabel();
-  }
 
   currentLevel++;
   if (p->comps[0])
@@ -449,15 +446,23 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     genCode1("ALOC", globalDisplCounter);
   //loadFormalsSymbolTable(formals);
   if(p->comps[3]->comps[3]) {
-    if(!ismain)
+    if(!ismain) {
+      midLabel = newLabel();
       genCodeJump("JUMP", midLabel);
-    else
+    }else {
       genCodeJump("JUMP", entLabel);
+    }
     processFunctions(p->comps[3]->comps[3]);
-    genCodeLabel(entLabel, "NOOP");
+    if(!ismain)
+      genCodeLabel(midLabel, "NOOP");
+    else
+      genCodeLabel(entLabel, "NOOP");
   }
 
   processStatements(p->comps[3]->comps[4]);
+
+  if(!ismain)
+    genCodeJump("JUMP", retLabel);
 
   if(currentDispl && ismain)
     genCode1("DLOC", currentDispl);
@@ -470,7 +475,8 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   }
 
   currentLevel--;
-  restoreSymbTable();
+  if(currentLevel != -1)
+    restoreSymbTable();
   //if(p->comps[0] != NULL)
   //  resType = getType(p->comps[0]);
 }
@@ -478,7 +484,4 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
 void processProgram(void *p) {
   //dumpTree(p);
   processFuncDecl(p, true);
-}
-
-void compatibleTypesFunctionCall(SymbEntryPtr ste, TreeNodePtr p) {
 }

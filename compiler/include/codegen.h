@@ -26,8 +26,6 @@ void genCodeLabel(int, char*);
 void genCodeEnfn(int, char*, int);
 void genCodeJump(char*, int);
 
-void compatibleTypesFunctionCall(SymbEntryPtr, TreeNodePtr);
-
 void SemanticError();
 int newLabel();
 

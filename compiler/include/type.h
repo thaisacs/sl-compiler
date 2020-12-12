@@ -25,6 +25,8 @@ typedef struct _typeDescr {
 } TypeDescr, *TypeDescrPtr;
 
 bool compatibleTypes(TypeDescrPtr, TypeDescrPtr);
+bool compatibleTypesBinOp(TypeDescrPtr, TypeDescrPtr, TypeDescrPtr);
+
 TypeDescrPtr newTypeDescr(TypeConstr, TypePrimitive, int);
 
 #endif

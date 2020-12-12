@@ -9,12 +9,18 @@ TypeDescrPtr newTypeDescr(TypeConstr c, TypePrimitive p, int s) {
 }
 
 bool compatibleTypes(TypeDescrPtr a, TypeDescrPtr b) {
-  //printf("%d %d %d\n", a->size, a->constr, a->prtv);
-  //printf("%d %d %d\n", b->size, b->constr, b->prtv);
   if(a->size == b->size && a->constr == b->constr
       && a->prtv == b->prtv) {
     return true;
   }
-  printf("não\n");
+  return false;
+}
+
+
+bool compatibleTypesBinOp(TypeDescrPtr op, TypeDescrPtr a, TypeDescrPtr b) {
+  if(a->size == b->size && a->constr == b->constr
+      && a->prtv == b->prtv) {
+    return true;
+  }
   return false;
 }

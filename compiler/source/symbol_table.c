@@ -7,10 +7,12 @@ SymbEntryPtr newSymbEntry(SymbCateg categ, char *id) {
   symb_entry->categ = categ;
   symb_entry->ident = id;
   symb_entry->descr = (DescrPtr) malloc(sizeof(Descr));
+  symb_entry->next = NULL;
   return symb_entry;
 }
 
 void insertSymbolTable(SymbEntryPtr entry) {
+  entry->open = true;
   if(SymbolTable != NULL)
     entry->next = SymbolTable;
   SymbolTable = entry;
@@ -26,7 +28,7 @@ void printSymbolTable() {
       case S_VARIABLE:
         printf("var ");
     }
-    //printf("%s %i %i %i\n", p->ident, p->level, p->descr->type->constr, p->descr->type->prtv);
+    printf("%s %i %i\n", p->ident, p->level, p->descr->displ);
   }
   printf("======================\n");
 }
@@ -44,7 +46,7 @@ SymbEntryPtr searchSte(char *id) {
 SymbEntryPtr searchLastFunction() {
   SymbEntryPtr p = SymbolTable;
   for ( ; (p!=NULL); p=p->next ) {
-    if(p->categ == S_FUNCTION) {
+    if(p->categ == S_FUNCTION && p->open) {
       return p;
     }
   }
@@ -53,13 +55,18 @@ SymbEntryPtr searchLastFunction() {
 
 void restoreSymbTable() {
   int cleanLevel = SymbolTable->level;
-  while(SymbolTable->level == cleanLevel) {
-    if(SymbolTable->categ != S_FUNCTION) {
-      SymbEntryPtr e = SymbolTable;
-      SymbolTable = SymbolTable->next;
+  SymbEntryPtr p = SymbolTable;
+  SymbEntryPtr q = NULL;
+  while(p != NULL && p->level == cleanLevel) {
+    if(p->categ != S_FUNCTION) {
+      SymbEntryPtr e = p;
+      q->next = p->next;
+      p = p->next;
       free(e);
     }else {
-      break;
+      p->open = false;
+      q = p;
+      p = p->next;
     }
   }
 }
