@@ -6,12 +6,13 @@ mv parser.h include
 mv parser.c source
 mv scanner.c source
 
-for n in `seq 10 1 15`
-do
-  echo '----------------'
-  ./slc < all/pr$n.sl
-  echo '----------------'
-done
+./slc < all/pr21.sl
+#for n in `seq 10 1 15`
+#do
+#  echo '----------------'
+#  ./slc < all/pr$n.sl
+#  echo '----------------'
+#done
 
 #for n in `seq 1 1 9`
 #do

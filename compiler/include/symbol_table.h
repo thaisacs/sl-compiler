@@ -32,10 +32,11 @@ typedef struct _symbEntry {
   DescrPtr descr;
 } SymbEntry, *SymbEntryPtr;
 
-SymbEntryPtr newSymbEntry(SymbCateg, char*);
 void insertSymbolTable(SymbEntryPtr);
 void printSymbolTable();
 void restoreSymbTable();
+
+SymbEntryPtr newSymbEntry(SymbCateg, char*);
 SymbEntryPtr searchSte(char*);
 SymbEntryPtr searchLastFunction();
 

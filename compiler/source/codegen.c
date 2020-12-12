@@ -37,6 +37,9 @@ TypeDescrPtr getOp(TreeNodePtr p) {
   }else if(!strcmp(p->str, "<")) {
     genCode0("LESS");
     return predefBool();
+  }else if(!strcmp(p->str, "<=")) {
+    genCode0("LEQU");
+    return predefBool();
   }else if(!strcmp(p->str, ">")) {
     genCode0("GRTR");
     return predefBool();
@@ -66,6 +69,10 @@ void genCode3(char *cmd, int a, int b) {
 
 void genCode4(char *cmd, int a, int b) {
   printf("      %s   L%i,%i\n", cmd, a, b);
+}
+
+void genCodeLabels(int label, int a, int b) {
+  printf("L%i:   ENLB   %i,%i\n", label, a, b);
 }
 
 void genCodeEnfn(int label, char *cmd, int enfn) {
@@ -313,14 +320,14 @@ void processFunctions(TreeNodePtr p) {
 }
 
 void processLabels(TreeNodePtr p) {
-  TreeNodePtr pvars = p;
+  TreeNodePtr pvars = invertList(p->comps[0]);
   for ( ; (pvars!=NULL); pvars=pvars->next ) {
-    char *ident = pvars->comps[0]->str;
+    char *ident = getIdent(pvars);
     int id = newLabel();
     SymbEntryPtr ste;
     ste = newSymbEntry(S_LABEL, ident);
     ste->level = id;
-    //ste->descr->displ = currentDispl;
+    ste->descr->displ = currentDispl;
     ste->descr->type = NULL;
     insertSymbolTable(ste);
   }
@@ -332,8 +339,10 @@ void processGoto(TreeNodePtr p) {
 }
 
 void processLabel(TreeNodePtr p) {
-  SymbEntryPtr ste = searchSte(p->comps[0]->str);
-  genCode0("ENLB   0,0");
+  char *ident = getIdent(p->comps[0]);
+  SymbEntryPtr ste = searchSte(ident);
+  genCodeLabels(ste->level, 0, 2);
+  processStatements(p->comps[1]);
 }
 
 void processStatements(TreeNodePtr p) {
@@ -362,6 +371,8 @@ void processStatements(TreeNodePtr p) {
         case C_RETURN:
           processReturn(pvars);
           break;
+        default:
+          puts("NO ONE");
       }
     }
   }
@@ -403,6 +414,9 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   int lastDispl = -4, entLabel, retLabel, midLabel;
   SymbEntryPtr formals, func;
 
+  if(p->comps[3]->comps[0])
+    processLabels(p->comps[3]);
+
   if(p->comps[3]->comps[3] || !ismain)
     entLabel = newLabel();
 
@@ -438,13 +452,13 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     genCodeEnfn(entLabel, "ENFN", currentEnfn);
   }
 
-  if(p->comps[3]->comps[0])
-    processLabels(p->comps[3]);
   //processTypes(p->comps[4]);
   processVariables(p->comps[3]->comps[2]);
+
   if(ismain && globalDisplCounter)
     genCode1("ALOC", globalDisplCounter);
   //loadFormalsSymbolTable(formals);
+
   if(p->comps[3]->comps[3]) {
     if(!ismain) {
       midLabel = newLabel();
