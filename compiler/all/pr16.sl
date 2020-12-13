@@ -10,7 +10,7 @@ void Example()
     }
 {
   x = -200+3*(-100);
-  y = 0;
+//  y = 0;
   y = f();
   write(x, y);
 }

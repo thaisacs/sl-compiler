@@ -362,7 +362,7 @@ void processGoto(TreeNodePtr p) {
 void processLabel(TreeNodePtr p) {
   char *ident = getIdent(p->comps[0]);
   SymbEntryPtr ste = searchSte(ident);
-  genCodeLabels(ste->level, 0, 2);
+  genCodeLabels(ste->level, 0, currentDispl);
   processStatements(p->comps[1]);
 }
 
