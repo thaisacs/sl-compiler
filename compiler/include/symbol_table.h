@@ -20,6 +20,7 @@ typedef struct _descr {
   Passage pass;
   TypeDescrPtr type;
   TypeDescrPtr result;
+  TypeDescrPtr params;
   int entLabel;
 } Descr, *DescrPtr;
 

@@ -16,7 +16,7 @@ void processStatements(TreeNodePtr);
 void processFunctionCall(TreeNodePtr);
 void processReturn(TreeNodePtr);
 
-SymbEntryPtr processFormals(TreeNodePtr, int*);
+TypeDescrPtr processFormals(TreeNodePtr, int*);
 
 void genCode0(char*);
 void genCode1(char*, int);

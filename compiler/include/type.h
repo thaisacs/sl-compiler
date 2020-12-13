@@ -22,10 +22,12 @@ typedef struct _typeDescr {
   TypeConstr constr;
   TypePrimitive prtv;
   int size;
+  struct _typeDescr *next;
 } TypeDescr, *TypeDescrPtr;
 
 bool compatibleTypes(TypeDescrPtr, TypeDescrPtr);
 bool compatibleTypesBinOp(TypeDescrPtr, TypeDescrPtr, TypeDescrPtr);
+bool compatibleTypesFunctionCall(TypeDescrPtr, TypeDescrPtr);
 
 TypeDescrPtr newTypeDescr(TypeConstr, TypePrimitive, int);
 
