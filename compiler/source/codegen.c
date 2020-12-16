@@ -6,10 +6,28 @@ SymbEntryPtr SymbTable = NULL;
 bool load = false;
 
 TypeDescrPtr getType(TreeNodePtr p) {
-  if(!strcmp(p->str, "integer"))
+  if(!strcmp(p->str, "integer")) {
     return newTypeDescr(T_PREDEF, T_INT, 1);
-  else
+  }else if(!strcmp(p->str, "boolean")) {
     return newTypeDescr(T_PREDEF, T_BOOL, 1);
+  }else {
+    SymbEntryPtr ste = searchSte(p->str);
+    ste->descr->type->constr = T_ARRAY;
+    return ste->descr->type;
+  }
+}
+
+int getIndx(TreeNodePtr p) {
+  //if(!strcmp(p->str, "integer")) {
+  //  return newTypeDescr(T_PREDEF, T_INT, 1);
+  //}else if(!strcmp(p->str, "boolean")) {
+  //  return newTypeDescr(T_PREDEF, T_BOOL, 1);
+  //}else {
+  //  SymbEntryPtr ste = searchSte(p->str);
+  //  ste->descr->type->constr = T_ARRAY;
+  //  return ste->descr->type;
+  //}
+  return 1;
 }
 
 int newLabel() {
@@ -140,8 +158,26 @@ void processVariables(TreeNodePtr p) {
 
 void processVarDecl(TreeNodePtr p) {
   TreeNodePtr pvars = invertList(p->comps[0]);
-  TypeDescrPtr ptype = getType(p->comps[1]);
   SymbEntryPtr ste; char *id;
+  int size = 0, element = 1;
+
+  TreeNodePtr psize = p->comps[2];
+  if(p->comps[2]) {
+    element = atoi(psize->str);
+    for ( ; (psize!=NULL); psize=psize->next ) {
+      if(!size)
+        size = atoi(psize->str);
+      else
+        size = size*atoi(psize->str);
+    }
+  }
+
+  TypeDescrPtr ptype = getType(p->comps[1]);
+  if(size) {
+    ptype->size = size;
+    ptype->constr = T_ARRAY;
+  }
+
   for ( ; (pvars!=NULL); pvars=pvars->next ) {
     id = getIdent(pvars);
     ste = newSymbEntry(S_VARIABLE, id);
@@ -210,22 +246,54 @@ TypeDescrPtr processBool(TreeNodePtr p) {
   return type;
 }
 
+TypeDescrPtr processArray(TreeNodePtr p, SymbEntryPtr ste) {
+  if(p) {
+    genCode3("LADR", ste->level, ste->descr->displ);
+    TreeNodePtr indexs = invertList(p);
+    for( ; (indexs!=NULL); indexs=indexs->next) {
+      load = true;
+      TreeNodePtr pindex = indexs->comps[0];
+      TypeDescrPtr texpr = processExpr(pindex);
+      load = false;
+      genCode1("INDX", texpr->size);
+    }
+    if(ste->descr->type->size == 1)
+      genCode0("CONT");
+    else
+      genCode1("LDMV", ste->descr->type->size);
+  }else {
+    genCode3("LADR", ste->level, ste->descr->displ);
+    genCode1("LDMV", ste->descr->type->size);
+  }
+
+  return ste->descr->type;
+}
+
 TypeDescrPtr processVar(TreeNodePtr p) {
-  char *id = p->comps[0]->str;
+  char *id = getIdent(p->comps[0]);
+
   if(!strcmp(id, "true")) {
     genCode2("LDCT", "1");
     return predefBool();
-  }else if(!strcmp(id, "false")) {
+  }
+
+  if(!strcmp(id, "false")) {
     genCode2("LDCT", "0");
     return predefBool();
+  }
+
+  SymbEntryPtr ste = searchSte(id);
+
+  if(ste->descr->type->constr == T_ARRAY) {
+    return processArray(p->comps[1], ste);
   }else {
-    SymbEntryPtr ste = searchSte(id);
     if(load)
       genCode3("LDVL", ste->level, ste->descr->displ);
     else
       genCode3("STVL", ste->level, ste->descr->displ);
     return ste->descr->type;
   }
+
 }
 
 TypeDescrPtr processUnExpr(TreeNodePtr p) {
@@ -269,25 +337,67 @@ TypeDescrPtr processBinExpr(TreeNodePtr p) {
 }
 
 void processAssign(TreeNodePtr p) {
-  TypeDescrPtr tvar,texpr;
+  TypeDescrPtr tvar, texpr;
   TreeNodePtr pvar = p->comps[0]->comps[0];
   TreeNodePtr pexpr = p->comps[1];
+  TreeNodePtr indexs;
   char *id = pvar->str;
+  int size = 1;
+
   SymbEntryPtr ste = searchSte(id);
+
   if(ste == NULL)
     SemanticError(); // undefined variable
+
   if((ste->categ != S_VARIABLE) && (ste->categ != S_PARAMETER))
     SemanticError();
-  tvar = ste->descr->type;
-  load = true;
-  texpr = processExpr(pexpr);
-  load = false;
+
   if(!compatibleTypes(tvar, texpr))
     SemanticError(); // incompatible types
-  if((ste->categ == S_PARAMETER) && (ste->descr->pass == P_VARIABLE))
-    genCode3("STVI", ste->level, ste->descr->displ);
-  else
-    genCode3("STVL", ste->level, ste->descr->displ);
+
+  switch(ste->descr->type->constr) {
+    case T_FUNCTION:
+      break;
+    case T_ARRAY:
+      load = true;
+      genCode3("LADR", ste->level, ste->descr->displ);
+      indexs = invertList(p->comps[0]->comps[1]);
+      for( ; (indexs!=NULL); indexs=indexs->next) {
+        load = true;
+        TreeNodePtr pindex = indexs->comps[0];
+        TypeDescrPtr texpr = processExpr(pindex);
+        load = false;
+        genCode1("INDX", texpr->size);
+      }
+      //pindexB = p->comps[0]->comps[2];
+      //if(pindexA) {
+      //  texpr = processExpr(pindexA);
+      //  genCode1("INDX", texpr->size);
+      //}else {
+      size = ste->descr->type->size;
+      //}
+      //if(pindexB) {
+      //  texpr = processExpr(pindexB);
+      //  genCode1("INDX", texpr->size);
+      //}else {
+      //  size = ste->descr->type->size;
+      //}
+      texpr = processExpr(pexpr);
+      genCode1("STMV", size);
+      load = false;
+      break;
+    default:
+      load = true;
+      texpr = processExpr(pexpr);
+      load = false;
+
+      tvar = ste->descr->type;
+
+      if((ste->categ == S_PARAMETER) && (ste->descr->pass == P_VARIABLE))
+        genCode3("STVI", ste->level, ste->descr->displ);
+      else
+        genCode3("STVL", ste->level, ste->descr->displ);
+  }
 }
 
 void processFunctionCall(TreeNodePtr p) {
@@ -350,6 +460,34 @@ void processLabels(TreeNodePtr p) {
     ste->level = id;
     ste->descr->displ = currentDispl;
     ste->descr->type = NULL;
+    insertSymbolTable(ste);
+  }
+}
+
+void processTypes(TreeNodePtr p) {
+  TreeNodePtr pvars = invertList(p);
+
+  for ( ; (pvars!=NULL); pvars=pvars->next ) {
+    char *ident = getIdent(pvars->comps[0]);
+    SymbEntryPtr ste = newSymbEntry(S_TYPE, ident);
+    ste->descr->displ = currentDispl;
+
+    TypeDescrPtr ptype = getType(pvars->comps[1]);
+    TreeNodePtr psize = pvars->comps[2];
+    int size = 0;
+
+    if(pvars) {
+      ptype->constr = T_ARRAY;
+      for ( ; (psize!=NULL); psize=psize->next ) {
+        if(!size)
+          size = atoi(psize->str);
+        else
+          size = size*atoi(psize->str);
+      }
+    }
+    ptype->size = size;
+    ste->descr->type = ptype;
+
     insertSymbolTable(ste);
   }
 }
@@ -484,12 +622,13 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
     genCodeEnfn(entLabel, "ENFN", currentEnfn);
   }
 
-  //processTypes(p->comps[4]);
+  if(p->comps[3]->comps[1])
+    processTypes(p->comps[3]->comps[1]);
+
   processVariables(p->comps[3]->comps[2]);
 
   if(ismain && globalDisplCounter)
     genCode1("ALOC", globalDisplCounter);
-  //loadFormalsSymbolTable(formals);
 
   if(p->comps[3]->comps[3]) {
     if(!ismain) {
@@ -523,8 +662,28 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   currentLevel--;
   if(currentLevel != -1)
     restoreSymbTable();
-  //if(p->comps[0] != NULL)
-  //  resType = getType(p->comps[0]);
+}
+
+TreeNodePtr invertList(TreeNodePtr p) {
+  TreeNodePtr pvars = NULL, r;
+  while (p != NULL) {
+    r = p->next;
+    p->next = pvars;
+    pvars = p;
+    p = r;
+  }
+  return pvars;
+}
+
+TypeDescrPtr invertTypeList(TypeDescrPtr p) {
+  TypeDescrPtr ptypes = NULL, r;
+  while (p != NULL) {
+    r = p->next;
+    p->next = ptypes;
+    ptypes = p;
+    p = r;
+  }
+  return ptypes;
 }
 
 void processProgram(void *p) {

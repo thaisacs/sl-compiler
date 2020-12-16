@@ -73,12 +73,12 @@ types: TYPES types_definition
      | empty
      ;
 
-types_definition: identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 2); }
-                | types_definition identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 2); insertTopList(); }
+types_definition: identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 3); }
+                | types_definition identifier ASSIGN type SEMI_COLON { genNode(C_TYPES, 3); insertTopList(); }
                 ;
 
-variable_declarations: identifier_list COLON type SEMI_COLON { genNode(C_VARS, 2); }
-                     | variable_declarations identifier_list COLON type SEMI_COLON { genNode(C_VARS, 2); insertTopList(); }
+variable_declarations: identifier_list COLON type SEMI_COLON { genNode(C_VARS, 3); }
+                     | variable_declarations identifier_list COLON type SEMI_COLON { genNode(C_VARS, 3); insertTopList(); }
                      ;
 
 variables: VARS variable_declarations
@@ -93,11 +93,11 @@ function_list: function_list function { insertTopList(); }
              | function
              ;
 
-type: identifier type_array
+type: identifier type_array { }
     ;
 
-type_array:
-          | type_array OPEN_BRACKET integer CLOSE_BRACKET
+type_array: empty
+          | type_array OPEN_BRACKET integer CLOSE_BRACKET { insertTopList(); }
           ;
 
 formal_parameters: OPEN_PAREN formal_parameter_opt CLOSE_PAREN
@@ -146,13 +146,12 @@ assignment: variable ASSIGN expression SEMI_COLON { genNode(C_ASSIGN, 2);}
 empty_statement: SEMI_COLON { genEmpty(); }
                ;
 
-variable: identifier { genNode(C_VAR, 1); }
-        ;
-/*
-variable_expression: variable_expression OPEN_BRACKET expression CLOSE_BRACKET { insertTopList(); }
-                   | empty
+variable: identifier variable_expression { genNode(C_VAR, 2); }
+
+variable_expression: empty                                                     {                  }
+                   | variable_expression OPEN_BRACKET expression CLOSE_BRACKET { insertTopList(); }
                    ;
-*/
+
 expression_opt: expression_list
               | empty
               ;

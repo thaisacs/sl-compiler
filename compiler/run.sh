@@ -6,7 +6,7 @@ mv parser.h include
 mv parser.c source
 mv scanner.c source
 
-./slc < all/pr19.sl
+./slc < all/pr35.sl
 
 #for n in `seq 10 1 15`
 #do

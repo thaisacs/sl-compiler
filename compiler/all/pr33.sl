@@ -3,11 +3,11 @@
 void Example()
   types
     Vector = integer[10];
-    
+
   vars
     v, w: Vector;
     i: integer;
-    
+
 { // main
   i = 0;
   while (i<10) {

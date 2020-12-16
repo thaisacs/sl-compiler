@@ -2,11 +2,15 @@
 #define CODEGEN_H
 
 #include <stdbool.h>
+#include <string.h>
 #include <stdio.h>
 #include "symbol_table.h"
 #include "tree.h"
-#include "util.h"
 #include "type.h"
+#include "stdlib.h"
+
+TreeNodePtr invertList(TreeNodePtr);
+TypeDescrPtr invertTypeList(TypeDescrPtr);
 
 void processProgram(void*);
 void processFuncDecl(TreeNodePtr, bool);

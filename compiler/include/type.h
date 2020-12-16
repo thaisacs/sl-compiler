@@ -15,13 +15,14 @@ typedef enum {
 
 typedef enum {
   T_INT = 1,
-  T_BOOL
+  T_BOOL,
 } TypePrimitive;
 
 typedef struct _typeDescr {
   TypeConstr constr;
   TypePrimitive prtv;
   int size;
+  int element;
   struct _typeDescr *next;
 } TypeDescr, *TypeDescrPtr;
 
