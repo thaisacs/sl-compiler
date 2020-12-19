@@ -22,7 +22,7 @@ typedef struct _typeDescr {
   TypeConstr constr;
   TypePrimitive prtv;
   int size;
-  int element;
+  int matriz;
   struct _typeDescr *next;
 } TypeDescr, *TypeDescrPtr;
 

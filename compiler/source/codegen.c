@@ -98,7 +98,10 @@ void genCodeEnfn(int label, char *cmd, int enfn) {
 }
 
 void genCodeLabel(int label, char *cmd) {
-  printf("L%i:   %s\n", label, cmd);
+  if(label > 9)
+    printf("L%i:  %s\n", label, cmd);
+  else
+    printf("L%i:   %s\n", label, cmd);
 }
 
 void genJump(int label) {
@@ -159,12 +162,13 @@ void processVariables(TreeNodePtr p) {
 void processVarDecl(TreeNodePtr p) {
   TreeNodePtr pvars = invertList(p->comps[0]);
   SymbEntryPtr ste; char *id;
-  int size = 0, element = 1;
+  int size = 0, matriz = 0, count = 0;
 
   TreeNodePtr psize = p->comps[2];
   if(p->comps[2]) {
-    element = atoi(psize->str);
+    matriz = atoi(psize->str);
     for ( ; (psize!=NULL); psize=psize->next ) {
+      count++;
       if(!size)
         size = atoi(psize->str);
       else
@@ -172,10 +176,14 @@ void processVarDecl(TreeNodePtr p) {
     }
   }
 
+  if(count < 2)
+    matriz = 0;
+
   TypeDescrPtr ptype = getType(p->comps[1]);
   if(size) {
     ptype->size = size;
     ptype->constr = T_ARRAY;
+    ptype->matriz = matriz;
   }
 
   for ( ; (pvars!=NULL); pvars=pvars->next ) {
@@ -247,26 +255,41 @@ TypeDescrPtr processBool(TreeNodePtr p) {
 }
 
 TypeDescrPtr processArray(TreeNodePtr p, SymbEntryPtr ste) {
+  int size = ste->descr->type->size;
+  int count = 0;
   if(p) {
     genCode3("LADR", ste->level, ste->descr->displ);
     TreeNodePtr indexs = invertList(p);
     for( ; (indexs!=NULL); indexs=indexs->next) {
+      count++;
       load = true;
       TreeNodePtr pindex = indexs->comps[0];
       TypeDescrPtr texpr = processExpr(pindex);
       load = false;
-      genCode1("INDX", texpr->size);
+      if(count == 1 && ste->descr->type->matriz) {
+        genCode1("INDX", ste->descr->type->matriz);
+        size = ste->descr->type->matriz;
+      }else {
+        genCode1("INDX", texpr->size);
+        size = texpr->size;
+      }
     }
-    if(ste->descr->type->size == 1)
+    if(count == 1 && ste->descr->type->matriz)
+      size = ste->descr->type->matriz;
+    else if(count == 2)
+      size = 1;
+    if(size == 1)
       genCode0("CONT");
     else
-      genCode1("LDMV", ste->descr->type->size);
+      genCode1("LDMV", size);
   }else {
     genCode3("LADR", ste->level, ste->descr->displ);
     genCode1("LDMV", ste->descr->type->size);
   }
 
-  return ste->descr->type;
+
+  return newTypeDescr(ste->descr->type->constr,
+      ste->descr->type->prtv, size);
 }
 
 TypeDescrPtr processVar(TreeNodePtr p) {
@@ -342,7 +365,7 @@ void processAssign(TreeNodePtr p) {
   TreeNodePtr pexpr = p->comps[1];
   TreeNodePtr indexs;
   char *id = pvar->str;
-  int size = 1;
+  int size = 1, count = 0;
 
   SymbEntryPtr ste = searchSte(id);
 
@@ -352,9 +375,6 @@ void processAssign(TreeNodePtr p) {
   if((ste->categ != S_VARIABLE) && (ste->categ != S_PARAMETER))
     SemanticError();
 
-  if(!compatibleTypes(tvar, texpr))
-    SemanticError(); // incompatible types
-
   switch(ste->descr->type->constr) {
     case T_FUNCTION:
       break;
@@ -363,35 +383,45 @@ void processAssign(TreeNodePtr p) {
       genCode3("LADR", ste->level, ste->descr->displ);
       indexs = invertList(p->comps[0]->comps[1]);
       for( ; (indexs!=NULL); indexs=indexs->next) {
+        count++;
         load = true;
         TreeNodePtr pindex = indexs->comps[0];
         TypeDescrPtr texpr = processExpr(pindex);
         load = false;
-        genCode1("INDX", texpr->size);
-      }
-      //pindexB = p->comps[0]->comps[2];
-      //if(pindexA) {
-      //  texpr = processExpr(pindexA);
-      //  genCode1("INDX", texpr->size);
-      //}else {
+        if(count == 1 && ste->descr->type->matriz)
+          genCode1("INDX", ste->descr->type->matriz);
+        else
+          genCode1("INDX", texpr->size);
+        }
+
       size = ste->descr->type->size;
-      //}
-      //if(pindexB) {
-      //  texpr = processExpr(pindexB);
-      //  genCode1("INDX", texpr->size);
-      //}else {
-      //  size = ste->descr->type->size;
-      //}
+      load = true;
       texpr = processExpr(pexpr);
-      genCode1("STMV", size);
+      load = false;
+
+      if(count == 1 && !ste->descr->type->matriz)
+        tvar = newTypeDescr(T_PREDEF, ste->descr->type->prtv, 1);
+      else if(count == 1 && ste->descr->type->matriz)
+        tvar = newTypeDescr(T_PREDEF, ste->descr->type->prtv, ste->descr->type->matriz);
+      else if(count == 2 && ste->descr->type->matriz)
+        tvar = newTypeDescr(T_PREDEF, ste->descr->type->prtv, 1);
+      else
+        tvar = ste->descr->type;
+
+      if(!compatibleTypes(tvar, texpr))
+        SemanticError(); // incompatible types
+
+      genCode1("STMV", texpr->size);
       load = false;
       break;
     default:
       load = true;
       texpr = processExpr(pexpr);
       load = false;
-
       tvar = ste->descr->type;
+
+      if(!compatibleTypes(tvar, texpr))
+        SemanticError(); // incompatible types
 
       if((ste->categ == S_PARAMETER) && (ste->descr->pass == P_VARIABLE))
         genCode3("STVI", ste->level, ste->descr->displ);
@@ -420,7 +450,7 @@ void processFunctionCall(TreeNodePtr p) {
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
     if(ste->descr->type)
-      genCode1("ALOC", 1);
+      genCode1("ALOC", ste->descr->type->size);
     TypeDescrPtr ptype = NULL;
     TypeDescrPtr buffer = NULL;
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
@@ -434,6 +464,7 @@ void processFunctionCall(TreeNodePtr p) {
       }
       load = false;
     }
+    printf("--> %s\n", ste->ident);
     ptype = invertTypeList(ptype);
     if(!compatibleTypesFunctionCall(ste->descr->params, ptype))
       SemanticError();
@@ -465,6 +496,7 @@ void processLabels(TreeNodePtr p) {
 }
 
 void processTypes(TreeNodePtr p) {
+  int count = 0;
   TreeNodePtr pvars = invertList(p);
 
   for ( ; (pvars!=NULL); pvars=pvars->next ) {
@@ -473,18 +505,27 @@ void processTypes(TreeNodePtr p) {
     ste->descr->displ = currentDispl;
 
     TypeDescrPtr ptype = getType(pvars->comps[1]);
+    ptype = newTypeDescr(ptype->constr, ptype->prtv, ptype->size);
     TreeNodePtr psize = pvars->comps[2];
-    int size = 0;
+    int size = ptype->size;
+
+    ptype->matriz = 0;
 
     if(pvars) {
       ptype->constr = T_ARRAY;
+      ptype->matriz = atoi(psize->str);
       for ( ; (psize!=NULL); psize=psize->next ) {
+        count++;
         if(!size)
           size = atoi(psize->str);
         else
           size = size*atoi(psize->str);
       }
     }
+
+    if(count < 2)
+      ptype->matriz = 0;
+
     ptype->size = size;
     ste->descr->type = ptype;
 

@@ -2,7 +2,7 @@
 
 void Example()
   types
-     Vector = integer[100];
+     Vector = integer[10];
      Matrix = Vector[10];
 
   vars

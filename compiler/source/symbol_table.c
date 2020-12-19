@@ -60,7 +60,8 @@ void restoreSymbTable() {
   while(p != NULL && p->level == cleanLevel) {
     if(p->categ != S_FUNCTION) {
       SymbEntryPtr e = p;
-      q->next = p->next;
+      if(q)
+        q->next = p->next;
       p = p->next;
       free(e);
     }else {

@@ -4,12 +4,12 @@ void Example()
   types
      Vector = integer[10];
      Matrix = Vector[10];
-     
+
   vars
      M: Matrix;
      S, T: Vector;
      i, j: integer;
-     
+
   functions
      void mat(A, B: Vector, var C: Matrix, m: integer)
        vars i, j: integer;
@@ -24,7 +24,7 @@ void Example()
          i = i+1;
        }
      } // mat
-     
+
 { // main
   i = 0;
   while (i<10) {

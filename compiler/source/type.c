@@ -10,19 +10,17 @@ TypeDescrPtr newTypeDescr(TypeConstr c, TypePrimitive p, int s) {
 }
 
 bool compatibleTypes(TypeDescrPtr a, TypeDescrPtr b) {
-  //if(a->size == b->size && a->constr == b->constr
-  //    && a->prtv == b->prtv) {
+  if(a->size == b->size && a->prtv == b->prtv) {
     return true;
-  //}
-  //return false;
+  }
+  return false;
 }
 
 bool compatibleTypesBinOp(TypeDescrPtr op, TypeDescrPtr a, TypeDescrPtr b) {
-  //if(a->size == b->size && a->constr == b->constr
-  //    && a->prtv == b->prtv) {
+  if(a->prtv == b->prtv && a->size == b->size) {
     return true;
-  //}
-  //return false;
+  }
+  return false;
 }
 
 bool compatibleTypesFunctionCall(TypeDescrPtr formals, TypeDescrPtr callparams) {
