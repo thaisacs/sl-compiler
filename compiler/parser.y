@@ -118,7 +118,7 @@ formal_parameter: expression_parameter
 function_parameter: function_header { genNode(C_PARAM, 3); }
                   ;
 
-expression_parameter: VAR identifier_list COLON identifier { genNode(C_PARAM, 2); }
+expression_parameter: VAR identifier_list COLON identifier { genNode(C_PARAM_DEF, 2); }
                     | identifier_list COLON identifier     { genNode(C_PARAM, 2); }
                     ;
 

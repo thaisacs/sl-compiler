@@ -2,8 +2,9 @@
 
 int currentLevel = -1, currentDispl = 0, globalDisplCounter = 0;
 int currentEnfn = 0;
+int currentLabel = 0;
+bool load = false, value = true;
 SymbEntryPtr SymbTable = NULL;
-bool load = false;
 
 TypeDescrPtr getType(TreeNodePtr p) {
   if(!strcmp(p->str, "integer")) {
@@ -12,22 +13,10 @@ TypeDescrPtr getType(TreeNodePtr p) {
     return newTypeDescr(T_PREDEF, T_BOOL, 1);
   }else {
     SymbEntryPtr ste = searchSte(p->str);
-    ste->descr->type->constr = T_ARRAY;
-    return ste->descr->type;
+    TypeDescrPtr type = cloneTypeDescr(ste->descr->type);
+    type->constr = T_ARRAY;
+    return type;
   }
-}
-
-int getIndx(TreeNodePtr p) {
-  //if(!strcmp(p->str, "integer")) {
-  //  return newTypeDescr(T_PREDEF, T_INT, 1);
-  //}else if(!strcmp(p->str, "boolean")) {
-  //  return newTypeDescr(T_PREDEF, T_BOOL, 1);
-  //}else {
-  //  SymbEntryPtr ste = searchSte(p->str);
-  //  ste->descr->type->constr = T_ARRAY;
-  //  return ste->descr->type;
-  //}
-  return 1;
 }
 
 int newLabel() {
@@ -154,6 +143,9 @@ void processCondition(TreeNodePtr p) {
 }
 
 void processVariables(TreeNodePtr p) {
+  globalDisplCounter = 0;
+  currentLabel += currentDispl;
+  currentDispl = 0;
   p = invertList(p);
   for( ; (p!=NULL); p=p->next)
     processVarDecl(p);
@@ -284,7 +276,8 @@ TypeDescrPtr processArray(TreeNodePtr p, SymbEntryPtr ste) {
       genCode1("LDMV", size);
   }else {
     genCode3("LADR", ste->level, ste->descr->displ);
-    genCode1("LDMV", ste->descr->type->size);
+    if(value)
+      genCode1("LDMV", ste->descr->type->size);
   }
 
 
@@ -380,7 +373,10 @@ void processAssign(TreeNodePtr p) {
       break;
     case T_ARRAY:
       load = true;
-      genCode3("LADR", ste->level, ste->descr->displ);
+      if(ste->descr->type->passage == P_VARIABLE)
+        genCode3("LDVL", ste->level, ste->descr->displ);
+      else
+        genCode3("LADR", ste->level, ste->descr->displ);
       indexs = invertList(p->comps[0]->comps[1]);
       for( ; (indexs!=NULL); indexs=indexs->next) {
         count++;
@@ -449,12 +445,21 @@ void processFunctionCall(TreeNodePtr p) {
     }
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
+
     if(ste->descr->type)
       genCode1("ALOC", ste->descr->type->size);
+
     TypeDescrPtr ptype = NULL;
     TypeDescrPtr buffer = NULL;
+
+    TypeDescrPtr params = ste->descr->params;
+
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
+      if(params->passage == P_VARIABLE)
+        value = false;
+
       load = true;
+
       if(!ptype) {
         ptype = processExpr(pexpr);
       }else {
@@ -462,12 +467,17 @@ void processFunctionCall(TreeNodePtr p) {
         buffer->next = ptype;
         ptype = buffer;
       }
+
+      params = params->next;
       load = false;
+      value = true;
     }
-    printf("--> %s\n", ste->ident);
+
     ptype = invertTypeList(ptype);
+
     if(!compatibleTypesFunctionCall(ste->descr->params, ptype))
       SemanticError();
+
     genCode4("CFUN", ste->descr->entLabel, ste->level-1);
   }
 }
@@ -541,7 +551,7 @@ void processGoto(TreeNodePtr p) {
 void processLabel(TreeNodePtr p) {
   char *ident = getIdent(p->comps[0]);
   SymbEntryPtr ste = searchSte(ident);
-  genCodeLabels(ste->level, 0, currentDispl);
+  genCodeLabels(ste->level, 0, currentLabel);
   processStatements(p->comps[1]);
 }
 
@@ -589,39 +599,53 @@ void processReturn(TreeNodePtr p) {
 }
 
 TypeDescrPtr processFormals(TreeNodePtr p, int *lastDispl) {
+  TypeDescrPtr types = NULL, buffer = NULL;
   TreeNodePtr t = p->comps[2];
-  TypeDescrPtr types = NULL, buffer;
+
   for ( ; (t!=NULL); t=t->next ) {
     TreeNodePtr p = t;
     TreeNodePtr pvars = p->comps[0];
+
     for ( ; (pvars!=NULL); pvars=pvars->next ) {
       char *id = getIdent(pvars);
+
       SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
       TypeDescrPtr ptype = getType(p->comps[1]);
+
+      switch(p->categ) {
+        case C_PARAM_DEF:
+          ptype->passage = P_VARIABLE;
+          (*lastDispl)--;
+          break;
+        default:
+          (*lastDispl) = (*lastDispl) - ptype->size;
+          ptype->passage = P_VALUE;
+      }
+
       ste->level = currentLevel;
-      (*lastDispl)--;
       ste->descr->displ = *lastDispl;
       ste->descr->type = ptype;
 
       if(!types) {
         types = ptype;
-      }else {
         buffer = ptype;
-        buffer->next = types;
-        types = buffer;
+      }else {
+        buffer->next = ptype;
+        buffer = ptype;
       }
 
       insertSymbolTable(ste);
     }
   }
 
-  return types;
+  return invertTypeList(types);
 }
 
 void processFuncDecl(TreeNodePtr p, bool ismain) {
   char *fname = getIdent(p->comps[1]);
   TypeDescrPtr resType = NULL, funType;
   int lastDispl = -4, entLabel, retLabel, midLabel;
+  int daloc = 0;
   SymbEntryPtr func;
   TypeDescrPtr formals;
 
@@ -651,6 +675,7 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   func->descr->displ = lastDispl;
   func->descr->type = resType;
   func->descr->entLabel = entLabel;
+
   insertSymbolTable(func);
 
   if (resType) {
@@ -668,8 +693,10 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
 
   processVariables(p->comps[3]->comps[2]);
 
-  if(ismain && globalDisplCounter)
+  if(globalDisplCounter)
     genCode1("ALOC", globalDisplCounter);
+
+  daloc = globalDisplCounter;
 
   if(p->comps[3]->comps[3]) {
     if(!ismain) {
@@ -690,13 +717,15 @@ void processFuncDecl(TreeNodePtr p, bool ismain) {
   if(!ismain)
     genCodeJump("JUMP", retLabel);
 
-  if(currentDispl && ismain)
-    genCode1("DLOC", currentDispl);
+  if(daloc && ismain)
+    genCode1("DLOC", daloc);
 
   if(ismain) {
     genCode0("STOP\n      END");
   }else {
     genCodeLabel(retLabel, "NOOP");
+    if(daloc)
+      genCode1("DLOC", daloc);
     genCode1("RTRN", -lastDispl-4);
   }
 
@@ -717,13 +746,18 @@ TreeNodePtr invertList(TreeNodePtr p) {
 }
 
 TypeDescrPtr invertTypeList(TypeDescrPtr p) {
-  TypeDescrPtr ptypes = NULL, r;
+  int count = 0;
+  TypeDescrPtr ptypes = NULL, b;
+
   while (p != NULL) {
-    r = p->next;
+    count++;
+    b = p->next;
     p->next = ptypes;
     ptypes = p;
-    p = r;
+    p = b;
   }
+
+
   return ptypes;
 }
 

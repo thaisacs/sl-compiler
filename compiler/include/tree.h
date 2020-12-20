@@ -28,6 +28,7 @@ typedef enum {
   C_RETURN,
   C_LABEL,
   C_PARAM,
+  C_PARAM_DEF,
   C_TYPES
 } Categ;
 

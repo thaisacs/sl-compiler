@@ -28,7 +28,7 @@ void printSymbolTable() {
       case S_VARIABLE:
         printf("var ");
     }
-    printf("%s %i %i\n", p->ident, p->level, p->descr->displ);
+    printf("%s %i %i %i\n", p->ident, p->level, p->descr->displ, p->categ);
   }
   printf("======================\n");
 }
@@ -57,11 +57,14 @@ void restoreSymbTable() {
   int cleanLevel = SymbolTable->level;
   SymbEntryPtr p = SymbolTable;
   SymbEntryPtr q = NULL;
+
   while(p != NULL && p->level == cleanLevel) {
     if(p->categ != S_FUNCTION) {
       SymbEntryPtr e = p;
       if(q)
         q->next = p->next;
+      else
+        SymbolTable = p->next;
       p = p->next;
       free(e);
     }else {
@@ -70,4 +73,6 @@ void restoreSymbTable() {
       p = p->next;
     }
   }
+
+
 }

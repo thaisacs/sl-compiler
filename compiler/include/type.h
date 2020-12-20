@@ -21,6 +21,7 @@ typedef enum {
 typedef struct _typeDescr {
   TypeConstr constr;
   TypePrimitive prtv;
+  Passage passage;
   int size;
   int matriz;
   struct _typeDescr *next;
@@ -30,6 +31,7 @@ bool compatibleTypes(TypeDescrPtr, TypeDescrPtr);
 bool compatibleTypesBinOp(TypeDescrPtr, TypeDescrPtr, TypeDescrPtr);
 bool compatibleTypesFunctionCall(TypeDescrPtr, TypeDescrPtr);
 
+TypeDescrPtr cloneTypeDescr(TypeDescrPtr);
 TypeDescrPtr newTypeDescr(TypeConstr, TypePrimitive, int);
 
 #endif

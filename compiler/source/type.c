@@ -9,6 +9,17 @@ TypeDescrPtr newTypeDescr(TypeConstr c, TypePrimitive p, int s) {
   return type;
 }
 
+TypeDescrPtr cloneTypeDescr(TypeDescrPtr t) {
+  TypeDescrPtr tclone = (TypeDescrPtr) malloc(sizeof(TypeDescr));
+  tclone->constr = t->constr;
+  tclone->prtv = t->prtv;
+  tclone->size = t->size;
+  tclone->matriz = t->matriz;
+  tclone->passage = t->passage;
+  tclone->next = NULL;
+  return tclone;
+}
+
 bool compatibleTypes(TypeDescrPtr a, TypeDescrPtr b) {
   if(a->size == b->size && a->prtv == b->prtv) {
     return true;
