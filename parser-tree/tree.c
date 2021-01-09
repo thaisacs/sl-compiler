@@ -40,7 +40,7 @@ void test(TreeNodePtr p, int *functions, int *funcalls,
       (*whiles)++;
     else if(p->categ == C_IF)
       (*ifs)++;
-    else if(p->categ == C_BIN_EXPR)
+    else if(p->categ == C_BIN_EXPR || p->categ == C_REL_EXPR)
       (*bin)++;
 
     for(int i = 0; i < p->n; i++) {
@@ -63,7 +63,6 @@ void counts(void *p, int *functions, int *funcalls,
   *bin = 0;
 
   test(p, functions, funcalls, whiles, ifs, bin);
-  //dumpTree(p);
 }
 
 void genNode3(Categ cat, int n, char *s) {
@@ -108,23 +107,23 @@ void insertTopList() {
 }
 
 void dumpNode(TreeNodePtr p) {
-  printf("\ncateg: %i\n", p->categ);
-  printf("n: %i\n", p->n);
   if(p->str)
-    printf("str: %s\n", p->str);
+    printf("str: %s %i\n", p->str, p->categ);
 }
 
 void dumpTree(TreeNodePtr p) {
   if(p) {
     dumpNode(p);
 
+    printf("\n%i -> ", p->categ);
     for(int i = 0; i < p->n; i++) {
       printf("\n%i -> ", i);
       dumpTree(p->comps[i]);
     }
 
-    if(p->next)
+    if(p->next) {
       dumpTree(p->next);
+    }
   }else{
     printf("\nvazio\n");
   }

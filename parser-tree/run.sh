@@ -26,7 +26,7 @@ do
   rm teste
 done
 
-for n in `seq 42 1 43`
+for n in `seq 41 1 43`
 do
   ./test_tree < all/pr$n.sl > teste
   diff all/result$n teste
@@ -37,4 +37,3 @@ done
 rm parser.c
 rm parser.h
 rm scanner.c
-rm test_tree

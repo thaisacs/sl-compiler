@@ -1,4 +1,0 @@
-// Minimal test
-
-void Example()
-{}
