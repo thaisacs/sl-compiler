@@ -6,14 +6,14 @@ void Example()
   vars
      U,W: Matrix;
      i, j: integer;
-     
+
   functions
-     void f(A: Matrix, var B: Matrix, m: integer,
+     void f(A: Matrix, var B: Matrix, m: integer, 
             void g(X: Matrix, var Y: Matrix, m: integer))
      {
        g(A,B,m);
      } // end f
-     
+
      void h(S: Matrix, var T: Matrix, m: integer)
        vars i, j: integer;
      {
@@ -27,7 +27,7 @@ void Example()
          i = i+1;
        }
      } // end h
-     
+
 { // main
   i = 0;
   while (i<10) {
@@ -47,5 +47,5 @@ void Example()
       j = j+1;
     }
     i = i+1;
-  }  
+  }
 } // end Example

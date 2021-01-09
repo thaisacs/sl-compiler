@@ -1,26 +1,27 @@
       MAIN
       ALOC   202
       JUMP   L1
-L2:   ENFN   1         f
+L2:   ENFN   1
       LADR   1,-109
       LDMV   100
       LDVL   1,-9
       LDVL   1,-8
       CPFN   1,-7,1
+      JUMP   L3
 L3:   NOOP
-      RTRN   105        end function
-L4:   ENFN   1         h
+      RTRN   105
+L4:   ENFN   1
       ALOC   2
       LDCT   0
       STVL   1,0
-L6:   NOOP             while
+L6:   NOOP
       LDVL   1,0
       LDVL   1,-5
       LESS
       JMPF   L7
       LDCT   0
       STVL   1,1
-L8:   NOOP             while
+L8:   NOOP
       LDVL   1,1
       LDVL   1,-5
       LESS
@@ -42,27 +43,28 @@ L8:   NOOP             while
       ADDD
       STVL   1,1
       JUMP   L8
-L9:   NOOP             end while
+L9:   NOOP
       LDVL   1,0
       LDCT   1
       ADDD
       STVL   1,0
       JUMP   L6
-L7:   NOOP             end while
-L5:   NOOP             
+L7:   NOOP
+      JUMP   L5
+L5:   NOOP
       DLOC   2
-      RTRN   102        end function
-L1:   NOOP             body
+      RTRN   102
+L1:   NOOP
       LDCT   0
       STVL   0,200
-L10:  NOOP             while
+L10:  NOOP
       LDVL   0,200
       LDCT   10
       LESS
       JMPF   L11
       LDCT   0
       STVL   0,201
-L12:  NOOP             while
+L12:  NOOP
       LDVL   0,201
       LDCT   10
       LESS
@@ -81,13 +83,13 @@ L12:  NOOP             while
       ADDD
       STVL   0,201
       JUMP   L12
-L13:  NOOP             end while
+L13:  NOOP
       LDVL   0,200
       LDCT   1
       ADDD
       STVL   0,200
       JUMP   L10
-L11:  NOOP             end while
+L11:  NOOP
       LADR   0,0
       LDMV   100
       LADR   0,100
@@ -96,14 +98,14 @@ L11:  NOOP             end while
       CFUN   L2,0
       LDCT   0
       STVL   0,200
-L14:  NOOP             while
+L14:  NOOP
       LDVL   0,200
       LDCT   10
       LESS
       JMPF   L15
       LDCT   0
       STVL   0,201
-L16:  NOOP             while
+L16:  NOOP
       LDVL   0,201
       LDCT   10
       LESS
@@ -120,13 +122,13 @@ L16:  NOOP             while
       ADDD
       STVL   0,201
       JUMP   L16
-L17:  NOOP             end while
+L17:  NOOP
       LDVL   0,200
       LDCT   1
       ADDD
       STVL   0,200
       JUMP   L14
-L15:  NOOP             end while
+L15:  NOOP
       DLOC   202
       STOP
-      END 
+      END

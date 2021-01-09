@@ -16,6 +16,7 @@ typedef enum {
 typedef enum {
   T_INT = 1,
   T_BOOL,
+  T_VOID,
 } TypePrimitive;
 
 typedef struct _typeDescr {

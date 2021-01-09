@@ -3,7 +3,7 @@
 int currentLevel = -1, currentDispl = 0, globalDisplCounter = 0;
 int currentEnfn = 0;
 int currentLabel = 0;
-bool load = false, value = true;
+bool load = false, value = true, called = false;
 SymbEntryPtr SymbTable = NULL;
 
 TypeDescrPtr getType(TreeNodePtr p) {
@@ -78,6 +78,10 @@ void genCode4(char *cmd, int a, int b) {
   printf("      %s   L%i,%i\n", cmd, a, b);
 }
 
+void genCode5(char *cmd, int a, int b, int c) {
+  printf("      %s   %i,%i,%i\n", cmd, a, b, c);
+}
+
 void genCodeLabels(int label, int a, int b) {
   printf("L%i:   ENLB   %i,%i\n", label, a, b);
 }
@@ -111,6 +115,10 @@ TypeDescrPtr predefBool() {
 
 TypeDescrPtr predefInt() {
   return newTypeDescr(T_PREDEF, T_INT, 1);
+}
+
+TypeDescrPtr predefVoid() {
+  return newTypeDescr(T_PREDEF, T_VOID, 1);
 }
 
 void processIteration(TreeNodePtr p) {
@@ -275,11 +283,13 @@ TypeDescrPtr processArray(TreeNodePtr p, SymbEntryPtr ste) {
     else
       genCode1("LDMV", size);
   }else {
-    genCode3("LADR", ste->level, ste->descr->displ);
+    if(ste->descr->type->passage == P_VARIABLE)
+      genCode3("LDVL", ste->level, ste->descr->displ);
+    else
+      genCode3("LADR", ste->level, ste->descr->displ);
     if(value)
       genCode1("LDMV", ste->descr->type->size);
   }
-
 
   return newTypeDescr(ste->descr->type->constr,
       ste->descr->type->prtv, size);
@@ -300,16 +310,24 @@ TypeDescrPtr processVar(TreeNodePtr p) {
 
   SymbEntryPtr ste = searchSte(id);
 
-  if(ste->descr->type->constr == T_ARRAY) {
-    return processArray(p->comps[1], ste);
-  }else {
+  if(ste->categ == S_FUNCTION) {
     if(load)
-      genCode3("LDVL", ste->level, ste->descr->displ);
+      genCode4("LGAD", ste->descr->entLabel, ste->level-1);
+    if(ste->descr->type)
+      return cloneTypeDescr(ste->descr->type);
     else
-      genCode3("STVL", ste->level, ste->descr->displ);
-    return ste->descr->type;
+      return predefVoid();
+  }else {
+    if(ste->descr->type->constr == T_ARRAY) {
+      return processArray(p->comps[1], ste);
+    }else {
+      if(load)
+          genCode3("LDVL", ste->level, ste->descr->displ);
+      else
+        genCode3("STVL", ste->level, ste->descr->displ);
+      return cloneTypeDescr(ste->descr->type);
+    }
   }
-
 }
 
 TypeDescrPtr processUnExpr(TreeNodePtr p) {
@@ -431,6 +449,7 @@ void processFunctionCall(TreeNodePtr p) {
   TreeNodePtr funcall = p->comps[0];
   TreeNodePtr pexpr = invertList(p->comps[1]);
 
+
   if(!strcmp(funcall->str, "write")) {
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
       load = true;
@@ -446,13 +465,20 @@ void processFunctionCall(TreeNodePtr p) {
   }else {
     SymbEntryPtr ste = searchSte(funcall->str);
 
-    if(ste->descr->type)
+    if(ste->descr->type && ste->descr->type->prtv != T_VOID)
       genCode1("ALOC", ste->descr->type->size);
 
     TypeDescrPtr ptype = NULL;
     TypeDescrPtr buffer = NULL;
 
     TypeDescrPtr params = ste->descr->params;
+    TypeDescrPtr par = ste->descr->params;
+
+    int count = 0;
+    while(par) {
+      count++;
+      par = par->next;
+    }
 
     for ( ; (pexpr!=NULL); pexpr=pexpr->next ) {
       if(params->passage == P_VARIABLE)
@@ -478,7 +504,10 @@ void processFunctionCall(TreeNodePtr p) {
     if(!compatibleTypesFunctionCall(ste->descr->params, ptype))
       SemanticError();
 
-    genCode4("CFUN", ste->descr->entLabel, ste->level-1);
+    if(ste->categ == S_FUNC_PARAM)
+      genCode5("CPFN", ste->level, ste->descr->displ-1, ste->level);
+    else
+      genCode4("CFUN", ste->descr->entLabel, ste->level-1);
   }
 }
 
@@ -606,35 +635,78 @@ TypeDescrPtr processFormals(TreeNodePtr p, int *lastDispl) {
     TreeNodePtr p = t;
     TreeNodePtr pvars = p->comps[0];
 
+    if(!pvars) {
+      pvars = malloc(sizeof(TreeNode));
+      pvars->categ = C_IDENT;
+      pvars->next = NULL;
+      pvars->str = "void";
+      pvars->n = 0;
+    }
+
     for ( ; (pvars!=NULL); pvars=pvars->next ) {
       char *id = getIdent(pvars);
 
-      SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
-      TypeDescrPtr ptype = getType(p->comps[1]);
+      if(!strcmp(id, "integer") || !strcmp(id, "void")) {
+        TypeDescrPtr resType;
+        char *fname = getIdent(p->comps[1]);
+        int test = -4;
 
-      switch(p->categ) {
-        case C_PARAM_DEF:
-          ptype->passage = P_VARIABLE;
-          (*lastDispl)--;
-          break;
-        default:
-          (*lastDispl) = (*lastDispl) - ptype->size;
-          ptype->passage = P_VALUE;
-      }
+        SymbEntryPtr func = newSymbEntry(S_FUNC_PARAM, fname);
 
-      ste->level = currentLevel;
-      ste->descr->displ = *lastDispl;
-      ste->descr->type = ptype;
+        if(!strcmp(id, "void")) {
+          resType = predefVoid();
+        }else {
+          resType = getType(p->comps[0]);
+          resType->passage = P_VALUE;
+        }
 
-      if(!types) {
-        types = ptype;
-        buffer = ptype;
+        func->descr->result = resType;
+        func->level = currentLevel;
+        (*lastDispl) -= 2;
+        func->descr->displ = *lastDispl;
+        TypeDescrPtr formals = processFormals(p, &(test));
+        (*lastDispl)--;
+        func->descr->params = formals;
+        func->descr->type = resType;
+        func->descr->entLabel = 0;
+
+        if(!types) {
+          types = resType;
+          buffer = resType;
+        }else {
+          buffer->next = resType;
+          buffer = resType;
+        }
+
+        insertSymbolTable(func);
       }else {
-        buffer->next = ptype;
-        buffer = ptype;
-      }
+        SymbEntryPtr ste = newSymbEntry(S_PARAMETER, id);
+        TypeDescrPtr ptype = getType(p->comps[1]);
 
-      insertSymbolTable(ste);
+        switch(p->categ) {
+          case C_PARAM_DEF:
+            ptype->passage = P_VARIABLE;
+            (*lastDispl)--;
+            break;
+          default:
+            (*lastDispl) = (*lastDispl) - ptype->size;
+            ptype->passage = P_VALUE;
+        }
+
+        ste->level = currentLevel;
+        ste->descr->displ = *lastDispl;
+        ste->descr->type = ptype;
+
+        if(!types) {
+          types = ptype;
+          buffer = ptype;
+        }else {
+          buffer->next = ptype;
+          buffer = ptype;
+        }
+
+        insertSymbolTable(ste);
+      }
     }
   }
 
@@ -746,8 +818,8 @@ TreeNodePtr invertList(TreeNodePtr p) {
 }
 
 TypeDescrPtr invertTypeList(TypeDescrPtr p) {
+  TypeDescrPtr ptypes = NULL, b = NULL;
   int count = 0;
-  TypeDescrPtr ptypes = NULL, b;
 
   while (p != NULL) {
     count++;
@@ -756,7 +828,6 @@ TypeDescrPtr invertTypeList(TypeDescrPtr p) {
     ptypes = p;
     p = b;
   }
-
 
   return ptypes;
 }

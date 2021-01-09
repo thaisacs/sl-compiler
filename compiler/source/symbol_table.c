@@ -73,6 +73,4 @@ void restoreSymbTable() {
       p = p->next;
     }
   }
-
-
 }

@@ -10,6 +10,7 @@ typedef enum {
   S_CONST = 1,
   S_VARIABLE,
   S_PARAMETER,
+  S_FUNC_PARAM,
   S_FUNCTION,
   S_LABEL,
   S_TYPE

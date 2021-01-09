@@ -52,6 +52,19 @@ do
   echo $n'------------------------------------'
 done
 
+for n in `seq 41 1 43`
+do
+  echo $n'------------------------------------'
+  ./slc  < all/pr$n.sl > progNN.mep
+  python3 mepa/mepa.py --limit 12000 --progfile progNN.mep < all/data$n.in > progNN.res
+  echo "###############################"
+  diff all/pr$n.res progNN.res
+  echo "###############################"
+  rm progNN.res
+  rm progNN.mep
+  echo $n'------------------------------------'
+done
+
 rm source/parser.c
 rm include/parser.h
 rm source/scanner.c
